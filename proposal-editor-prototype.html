@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Proposal Editor – Prototype</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; flex-direction: column; background: #1a1a2e; }
+/* ═══════════════════════════════════════════════
+   TOP BAR
+═══════════════════════════════════════════════ */
+.top-bar {
+  background: #111827; height: 48px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 8px; padding: 0 12px;
+  border-bottom: 1px solid #232a3a;
+}
+.tb-label { font-size: 11px; color: #666; white-space: nowrap; }
+.tb-name {
+  background: transparent; border: none; border-bottom: 1px solid #3a3a5a;
+  color: #eee; font-size: 13px; font-weight: 500; padding: 2px 4px;
+  outline: none; width: 210px;
+}
+.tb-name:focus { border-bottom-color: #c85c00; }
+.tb-sep { width: 1px; height: 24px; background: #252a3a; flex-shrink: 0; margin: 0 2px; }
+.tb-date {
+  background: transparent; border: none; border-bottom: 1px solid #3a3a5a;
+  color: #ccc; font-size: 12px; padding: 2px 4px; outline: none; width: 88px;
+}
+.tb-date:focus { border-bottom-color: #c85c00; }
+.nights-ctrl {
+  display: flex; align-items: center; gap: 5px;
+  background: #1e2535; border: 1px solid #2a3050; border-radius: 4px; padding: 2px 6px;
+}
+.nights-ctrl span { color: #ddd; font-size: 13px; min-width: 18px; text-align: center; }
+.nights-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 15px; line-height: 1; padding: 0 3px; }
+.nights-btn:hover { color: #fff; }
+.tb-check { display: flex; align-items: center; gap: 5px; }
+.tb-check input { accent-color: #c85c00; cursor: pointer; }
+.tb-check label { font-size: 12px; color: #888; cursor: pointer; white-space: nowrap; }
+.tb-pax { background: transparent; border: none; border-bottom: 1px solid #3a3a5a; color: #ccc; font-size: 13px; padding: 2px 4px; outline: none; width: 36px; }
+.tb-spacer { flex: 1; }
+.tb-btn {
+  padding: 6px 14px; border-radius: 5px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: 1px solid #3a4060; color: #bbb; background: transparent;
+  transition: all .15s; white-space: nowrap;
+}
+.tb-btn:hover { background: #1e2535; border-color: #6a6aaa; color: #ddd; }
+.tb-btn-blue { background: #1a4a8a; border-color: #1a4a8a; color: #fff; }
+.tb-btn-blue:hover { background: #1540780; }
+.tb-btn-green { background: #1a6a2a; border-color: #1a6a2a; color: #fff; }
+.tb-btn-green:hover { background: #145520; }
+/* ═══════════════════════════════════════════════
+   EDITOR BODY
+═══════════════════════════════════════════════ */
+.editor-body { flex: 1; display: flex; overflow: hidden; position: relative; background: #f0f2f5; }
+/* ═══════════════════════════════════════════════
+   GRID
+═══════════════════════════════════════════════ */
+.grid-scroll { flex: 1; overflow: auto; }
+.proposal-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(4, minmax(280px, 1fr));
+  min-width: 1200px;
+}
+/* Label column */
+.lbl { background: #fff; border-right: 2px solid #e8e8e8; border-bottom: 1px solid #eee; display: flex; align-items: flex-start; justify-content: flex-end; padding: 14px 10px 0 0; }
+.lbl.mid { align-items: center; padding-top: 0; }
+.lbl span { font-size: 11px; font-weight: 800; color: #c85c00; text-transform: uppercase; letter-spacing: .5px; }
+/* Day headers */
+.day-hdr {
+  background: #a83218; color: #fff;
+  padding: 12px 14px; border-right: 1px solid rgba(0,0,0,.18);
+  min-height: 90px; position: relative;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.dh-wday { font-size: 12px; font-weight: 300; opacity: .85; margin-bottom: 1px; }
+.dh-date { font-size: 30px; font-weight: 700; line-height: 1; }
+.dh-month { font-size: 12px; }
+.dh-loc { font-size: 12px; font-style: italic; opacity: .8; margin-top: 3px; }
+.dh-nav { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 3px; align-items: flex-end; }
+.dh-nav-row { display: flex; gap: 2px; }
+.dh-navbtn { width: 20px; height: 20px; border: none; background: rgba(255,255,255,.15); color: #fff; border-radius: 3px; cursor: default; font-size: 9px; display: flex; align-items: center; justify-content: center; }
+/* Section cells */
+.sec-cell {
+  background: #d4a017; border-right: 1px solid rgba(0,0,0,.07);
+  border-bottom: 1px solid rgba(0,0,0,.05);
+  padding: 8px; min-height: 185px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+/* Entry cards */
+.entry-card {
+  background: rgba(255,255,255,.88); border-radius: 6px;
+  padding: 8px 10px; font-size: 12px; color: #2a2a2a;
+  cursor: pointer; display: flex; align-items: flex-start; gap: 6px;
+  transition: background .1s, box-shadow .1s; line-height: 1.45;
+}
+.entry-card:hover { background: rgba(255,255,255,.97); box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.entry-card.active { background: #fff; box-shadow: 0 0 0 2px #c85c00; }
+.ec-body { flex: 1; min-width: 0; }
+.ec-text { display: block; }
+.ec-supplier-tag {
+  display: inline-block; margin-top: 4px;
+  background: #fff0e6; color: #a34800; border-radius: 3px;
+  padding: 1px 6px; font-size: 10px; font-weight: 600;
+}
+.ec-actions { display: flex; gap: 3px; opacity: 0; transition: opacity .1s; flex-shrink: 0; }
+.entry-card:hover .ec-actions, .entry-card.active .ec-actions { opacity: 1; }
+.ec-btn { width: 22px; height: 22px; border: none; background: rgba(0,0,0,.07); border-radius: 4px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #555; }
+.ec-btn:hover { background: rgba(0,0,0,.14); }
+/* New entry input */
+.new-entry {
+  flex-shrink: 0; background: transparent;
+  border: 1px dashed rgba(255,255,255,.38); border-radius: 6px;
+  padding: 6px 10px; font-size: 12px; color: rgba(255,255,255,.55);
+  outline: none; font-family: inherit; transition: all .1s; width: 100%;
+}
+.new-entry::placeholder { color: rgba(255,255,255,.45); }
+.new-entry:focus { border-color: rgba(255,255,255,.7); background: rgba(255,255,255,.1); color: rgba(255,255,255,.9); }
+/* Driving row */
+.drv-cell {
+  background: #b89010; border-right: 1px solid rgba(0,0,0,.1);
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  padding: 8px 14px; min-height: 44px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.drv-val { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.9); }
+.drv-copy { background: rgba(255,255,255,.15); border: none; color: rgba(255,255,255,.8); border-radius: 4px; width: 24px; height: 24px; cursor: default; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+/* Lodging row */
+.ldg-cell {
+  background: #b89010; border-right: 1px solid rgba(0,0,0,.1);
+  padding: 6px 10px; min-height: 50px;
+  display: flex; align-items: center; gap: 6px;
+}
+.ldg-input {
+  flex: 1; background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.22); border-radius: 6px;
+  padding: 6px 10px; font-size: 12px; color: #fff; outline: none;
+  font-family: inherit; transition: all .1s;
+}
+.ldg-input::placeholder { color: rgba(255,255,255,.38); }
+.ldg-input:focus { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.6); }
+.ldg-input.filled { font-weight: 500; }
+.ldg-search {
+  width: 30px; height: 30px; flex-shrink: 0;
+  background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
+  border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; transition: background .15s;
+}
+.ldg-search:hover { background: rgba(255,255,255,.35); }
+/* ═══════════════════════════════════════════════
+   ENTRY PANEL (right slide-in)
+═══════════════════════════════════════════════ */
+.entry-panel {
+  width: 268px; flex-shrink: 0; background: #fff;
+  box-shadow: -4px 0 20px rgba(0,0,0,.13);
+  position: absolute; right: 0; top: 0; bottom: 0; z-index: 100;
+  display: flex; flex-direction: column;
+  transform: translateX(268px); transition: transform .22s ease;
+}
+.entry-panel.open { transform: translateX(0); }
+.ep-header {
+  padding: 12px 14px; border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.ep-title { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+.ep-close { width: 26px; height: 26px; border: none; background: #f2f2f2; border-radius: 50%; cursor: pointer; font-size: 13px; color: #666; display: flex; align-items: center; justify-content: center; }
+.ep-close:hover { background: #e4e4e4; }
+.ep-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.pf { display: flex; flex-direction: column; gap: 4px; }
+.pf-label { font-size: 10px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: .5px; }
+.pf-input {
+  padding: 7px 10px; border: 1px solid #e4e4e4; border-radius: 6px;
+  font-size: 13px; color: #222; outline: none; font-family: inherit;
+  transition: border-color .15s; width: 100%;
+}
+.pf-input:focus { border-color: #c85c00; box-shadow: 0 0 0 3px rgba(200,92,0,.08); }
+.pf-input.filled { border-color: #d4a017; background: #fffbf0; }
+.pf-input[readonly] { background: #f9f9f9; color: #888; cursor: default; }
+.pf-textarea { padding: 7px 10px; border: 1px solid #e4e4e4; border-radius: 6px; font-size: 12px; color: #333; outline: none; font-family: inherit; resize: vertical; min-height: 60px; transition: border-color .15s; width: 100%; }
+.pf-textarea:focus { border-color: #c85c00; }
+.pf-row { display: flex; gap: 6px; align-items: stretch; }
+.pf-row .pf-input { flex: 1; }
+.pf-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pf-check { display: flex; align-items: center; gap: 8px; }
+.pf-check input { accent-color: #c85c00; width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; }
+.pf-check label { font-size: 12px; color: #555; cursor: pointer; line-height: 1.3; }
+.pf-divider { height: 1px; background: #f4f4f4; }
+.browse-btn {
+  padding: 0 10px; background: #c85c00; color: #fff; border: none;
+  border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+  white-space: nowrap; display: flex; align-items: center; gap: 4px;
+  transition: background .15s; flex-shrink: 0;
+}
+.browse-btn:hover { background: #a34800; }
+.ep-footer { padding: 10px 14px; border-top: 1px solid #f0f0f0; display: flex; gap: 8px; flex-shrink: 0; }
+.ep-save { flex: 1; padding: 8px; background: #c85c00; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.ep-save:hover { background: #a34800; }
+.ep-cancel { padding: 8px 14px; background: #f5f5f5; color: #666; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+.ep-cancel:hover { background: #ebebeb; }
+/* ═══════════════════════════════════════════════
+   SUPPLIER EXPLORER MODAL
+═══════════════════════════════════════════════ */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.52);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.overlay.active { opacity: 1; pointer-events: all; }
+.modal {
+  background: #fff; border-radius: 12px;
+  width: 96vw; max-width: 1060px; height: 86vh; max-height: 700px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 28px 70px rgba(0,0,0,.3);
+  transform: translateY(14px); transition: transform .2s; overflow: hidden;
+}
+.overlay.active .modal { transform: translateY(0); }
+.modal-hdr {
+  padding: 14px 20px; border-bottom: 1px solid #eee;
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.modal-title { font-size: 15px; font-weight: 700; color: #1a1a1a; white-space: nowrap; }
+.modal-ctx { font-size: 12px; color: #c85c00; font-weight: 500; white-space: nowrap; background: #fff0e6; padding: 2px 8px; border-radius: 10px; }
+.srch-wrap { flex: 1; position: relative; }
+.srch-wrap input {
+  width: 100%; padding: 8px 12px 8px 34px; border: 1px solid #ddd;
+  border-radius: 8px; font-size: 13px; color: #222; outline: none; transition: border-color .15s;
+}
+.srch-wrap input:focus { border-color: #c85c00; box-shadow: 0 0 0 3px rgba(200,92,0,.1); }
+.srch-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #bbb; font-size: 14px; pointer-events: none; }
+.modal-close { width: 30px; height: 30px; border-radius: 50%; border: none; background: #f2f2f2; cursor: pointer; font-size: 15px; color: #666; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s; }
+.modal-close:hover { background: #e4e4e4; }
+.modal-body { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+/* Filters */
+.filters { width: 224px; flex-shrink: 0; border-right: 1px solid #eee; overflow-y: auto; background: #fafafa; padding: 14px; display: flex; flex-direction: column; min-height: 0; }
+.fs-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .7px; color: #ccc; margin-bottom: 10px; }
+.fs-title.mt { margin-top: 14px; padding-top: 14px; border-top: 1px solid #eee; }
+.fg { margin-bottom: 12px; }
+.fg-label { font-size: 12px; font-weight: 600; color: #444; display: block; margin-bottom: 5px; }
+.fg-select { width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; color: #333; background: #fff; outline: none; cursor: pointer; transition: border-color .15s; }
+.fg-select:focus { border-color: #c85c00; }
+.fg.hidden { display: none; }
+.tog-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid #eee; margin-top: 6px; }
+.tog-lbl { font-size: 12px; color: #555; }
+.tog { position: relative; width: 34px; height: 18px; flex-shrink: 0; }
+.tog input { opacity: 0; width: 0; height: 0; }
+.tog-sl { position: absolute; inset: 0; background: #ccc; border-radius: 18px; cursor: pointer; transition: background .2s; }
+.tog-sl:before { content:''; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px; background: #fff; border-radius: 50%; transition: transform .2s; }
+.tog input:checked + .tog-sl { background: #c85c00; }
+.tog input:checked + .tog-sl:before { transform: translateX(16px); }
+.f-count { font-size: 11px; color: #ccc; margin-top: 6px; }
+.f-clear { width: 100%; padding: 7px; margin-top: 8px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-size: 12px; color: #aaa; cursor: pointer; transition: all .15s; }
+.f-clear:hover { border-color: #c85c00; color: #c85c00; }
+/* Results */
+.results-wrap { flex: 1; position: relative; overflow: hidden; }
+.results-wrap::after {
+  content: ''; pointer-events: none;
+  position: absolute; bottom: 0; left: 0; right: 0; height: 48px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.95));
+}
+.results {
+  position: absolute; inset: 0;
+  overflow-y: scroll; padding: 14px; padding-bottom: 52px;
+}
+.results .s-card { margin-bottom: 10px; }
+.results .s-card:last-child { margin-bottom: 0; }
+.results::-webkit-scrollbar { width: 6px; }
+.results::-webkit-scrollbar-track { background: transparent; }
+.results::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 3px; }
+.results::-webkit-scrollbar-thumb:hover { background: #aaa; }
+.empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ccc; gap: 8px; padding: 40px; text-align: center; }
+.empty-icon { font-size: 40px; }
+.empty-txt { font-size: 14px; color: #bbb; }
+.empty-sub { font-size: 12px; }
+/* Supplier cards */
+.s-card { border: 1px solid #e8e8e8; border-radius: 10px; overflow: hidden; background: #fff; transition: box-shadow .15s; }
+.s-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+.s-hdr { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; transition: background .15s; }
+.s-hdr:hover { background: #fff8f4; }
+.s-hdr.open { background: #fff8f4; border-bottom: 1px solid #f0e8e0; }
+.s-left { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
+.s-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+.s-unavail { font-size: 11px; font-weight: 600; margin-left: 6px; }
+.s-unavail.dis { color: #e05252; } .s-unavail.cls { color: #d08000; }
+.s-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.b-cat  { background: #fff0e6; color: #b84d00; }
+.b-grade { background: #f0f7ff; color: #1a6fc4; }
+.b-loc  { background: #f0faf0; color: #2a7035; }
+.b-hotel { background: #fffbe6; color: #a07000; }
+.b-lang { background: #f5f0ff; color: #6b3fa0; }
+.s-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: 12px; }
+.s-count { font-size: 12px; color: #bbb; }
+.s-chev { font-size: 11px; color: #ccc; transition: transform .2s; }
+.s-chev.open { transform: rotate(180deg); }
+.svc-list { display: none; }
+.svc-list.open { display: block; }
+.svc-tbl { width: 100%; border-collapse: collapse; }
+.svc-tbl thead tr { background: #f8f8f8; border-bottom: 1px solid #eee; }
+.svc-tbl th { padding: 7px 14px; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: #bbb; text-align: left; font-weight: 700; }
+.svc-tbl th:nth-child(2), .svc-tbl th:nth-child(3) { text-align: right; }
+.svc-tbl td { padding: 10px 14px; font-size: 13px; color: #333; border-bottom: 1px solid #f4f4f4; vertical-align: top; }
+.svc-tbl tr:last-child td { border-bottom: none; }
+.svc-tbl tbody tr:hover td { background: #fdf8f5; }
+.svc-name { font-weight: 500; color: #1a1a1a; }
+.svc-sub { font-size: 11px; color: #bbb; margin-top: 2px; }
+.td-r { text-align: right; }
+.p-cost { color: #999; font-size: 13px; }
+.p-quote { font-weight: 600; color: #1a6fc4; font-size: 13px; }
+.sel-btn { padding: 6px 14px; background: #c85c00; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s; }
+.sel-btn:hover { background: #a34800; }
+/* Toast */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px); background: #111; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 9999; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<!-- ══════════════════════════════════════════
+     TOP BAR
+══════════════════════════════════════════ -->
+<div class="top-bar">
+  <span class="tb-label">Name</span>
+  <input class="tb-name" value="Heather Ross – Morocco Trip">
+  <div class="tb-sep"></div>
+  <span class="tb-label">Start Date</span>
+  <input class="tb-date" value="08-Sept-2026">
+  <div class="tb-sep"></div>
+  <span class="tb-label">Nights</span>
+  <div class="nights-ctrl">
+    <button class="nights-btn">−</button>
+    <span>10</span>
+    <button class="nights-btn">+</button>
+  </div>
+  <div class="tb-sep"></div>
+  <span class="tb-label">End Date</span>
+  <input class="tb-date" value="18-Sept-2026" readonly>
+  <div class="tb-sep"></div>
+  <div class="tb-check"><input type="checkbox" id="breakdown"><label for="breakdown">Breakdown</label></div>
+  <div class="tb-check"><input type="checkbox" id="hideDates"><label for="hideDates">Hide Dates</label></div>
+  <div class="tb-sep"></div>
+  <span class="tb-label">PAX</span>
+  <input class="tb-pax" type="number" value="10">
+  <div class="tb-spacer"></div>
+  <button class="tb-btn tb-btn-blue">Itinerary</button>
+  <button class="tb-btn tb-btn-blue">Pricing</button>
+  <button class="tb-btn tb-btn-green">Save</button>
+  <button class="tb-btn">Close</button>
+</div>
+<!-- ══════════════════════════════════════════
+     EDITOR BODY
+══════════════════════════════════════════ -->
+<div class="editor-body">
+  <div class="grid-scroll" id="gridScroll">
+    <div class="proposal-grid">
+      <!-- ── HEADER ROW ── -->
+      <div class="lbl"></div>
+      <div class="day-hdr">
+        <div class="dh-nav"><div class="dh-nav-row"><div class="dh-navbtn">◀</div><div class="dh-navbtn">▶</div></div><div class="dh-nav-row"><div class="dh-navbtn">↵</div><div class="dh-navbtn">↤</div></div></div>
+        <div class="dh-wday">Tuesday</div><div class="dh-date">8</div><div class="dh-month">Sep</div><div class="dh-loc">Casablanca</div>
+      </div>
+      <div class="day-hdr">
+        <div class="dh-nav"><div class="dh-nav-row"><div class="dh-navbtn">◀</div><div class="dh-navbtn">▶</div></div><div class="dh-nav-row"><div class="dh-navbtn">↵</div><div class="dh-navbtn">↤</div></div></div>
+        <div class="dh-wday">Wednesday</div><div class="dh-date">9</div><div class="dh-month">Sep</div><div class="dh-loc">Chefchaouen</div>
+      </div>
+      <div class="day-hdr">
+        <div class="dh-nav"><div class="dh-nav-row"><div class="dh-navbtn">◀</div><div class="dh-navbtn">▶</div></div><div class="dh-nav-row"><div class="dh-navbtn">↵</div><div class="dh-navbtn">↤</div></div></div>
+        <div class="dh-wday">Thursday</div><div class="dh-date">10</div><div class="dh-month">Sep</div><div class="dh-loc">Chefchaouen</div>
+      </div>
+      <div class="day-hdr">
+        <div class="dh-nav"><div class="dh-nav-row"><div class="dh-navbtn">◀</div><div class="dh-navbtn">▶</div></div><div class="dh-nav-row"><div class="dh-navbtn">↵</div><div class="dh-navbtn">↤</div></div></div>
+        <div class="dh-wday">Friday</div><div class="dh-date">11</div><div class="dh-month">Sep</div><div class="dh-loc">Fes</div>
+      </div>
+      <!-- ── MORNING ROW ── -->
+      <div class="lbl"><span>Morning</span></div>
+      <!-- Sep 8 – Morning (empty) -->
+      <div class="sec-cell" id="cell-morning-1">
+        <input class="new-entry" placeholder="New Entry ...">
+      </div>
+      <!-- Sep 9 – Morning -->
+      <div class="sec-cell" id="cell-morning-2">
+        <div class="entry-card" onclick="openPanel(this,'morning',2,0)">
+          <div class="ec-body">
+            <span class="ec-text">Explore the architectural marvel of Hassan II Mosque and stroll along the picturesque Corniche.</span>
+          </div>
+          <div class="ec-actions">
+            <button class="ec-btn" title="Copy">⧉</button>
+            <button class="ec-btn" title="Delete">🗑</button>
+          </div>
+        </div>
+        <input class="new-entry" placeholder="New Entry ...">
+      </div>
+      <!-- Sep 10 – Morning -->
+      <div class="sec-cell" id="cell-morning-3">
+        <div class="entry-card" onclick="openPanel(this,'morning',3,0)">
+          <div class="ec-body">
+            <span class="ec-text">Spend a full day immersed in the charm of the 'Blue City', Chefchaouen, including a guided old medina walk.</span>
+          </div>
+          <div class="ec-actions">
+            <button class="ec-btn">⧉</button>
+            <button class="ec-btn">🗑</button>
+          </div>
+        </div>
+        <input class="new-entry" placeholder="New Entry ...">
+      </div>
+      <!-- Sep 11 – Morning -->
+      <div class="sec-cell" id="cell-morning-4">
+        <div class="entry-card" onclick="openPanel(this,'morning',4,0)">
+          <div class="ec-body">
+            <span class="ec-text">Discover the ancient Volubilis Roman ruins before descending into the spiritual heart of Fes el-Bali.</span>
+          </div>
+          <div class="ec-actions">
+            <button class="ec-btn">⧉</button>
+            <button class="ec-btn">🗑</button>
+          </div>
+        </div>
+        <input class="new-entry" placeholder="New Entry ...">
+      </div>
+      <!-- ── AFTERNOON ROW ── -->
+      <div class="lbl"><span>Afternoon</span></div>
+      <!-- Sep 8 – Afternoon -->
+      <div class="sec-cell" id="cell-afternoon-1">
+        <div class="entry-card" onclick="openPanel(this,'afternoon',1,0)" data-supplier="Atlas Luxury Tours" data-service="Private Transfer CMN Airport – Hotel" data-cost="85" data-quote="120">
+          <div class="ec-body">
+            <span class="ec-text">Experience a seamless arrival at CMN with fast-track service, followed by a comfortable transfer to your luxurious hotel.</span>
+            <span class="ec-supplier-tag">Atlas Luxury Tours</span>
+          </div>
+          <div class="ec-actions">
+            <button class="ec-btn">⧉</button>
+            <button class="ec-btn">🗑</button>
+          </div>
+        </div>
+        <input class="new-entry" placeholder="New Entry ...">
+      </div>
+      <!-- Sep 9 – Afternoon -->
+      <div class="sec-cell" id="cell-afternoon-2">
+        <div class="entry-card" onclick="openPanel(this,'afternoon',2,0)">
+          <div class="ec-body">
+            <span class="ec-text">Embark on a captivating Rabat city tour, discovering the historic Hassan Tower and the enchanting Kasbah of Oudayas.</span>
+          </div>
+          <div class="ec-actions">
+            <button class="ec-btn">⧉</button>
+            <button class="ec-btn">🗑</button>
+          </div>
+        </div>
+        <input class="new-entry" placeholder="New Entry ...">
+      </div>
+      <!-- Sep 10 – Afternoon (empty) -->
+      <div class="sec-cell" id="cell-afternoon-3">
+        <input class="new-entry" placeholder="New Entry ...">
+      </div>
+      <!-- Sep 11 – Afternoon (empty) -->
+      <div class="sec-cell" id="cell-afternoon-4">
+        <div class="entry-card" onclick="openPanel(this,'afternoon',4,0)">
+          <div class="ec-body">
+            <span class="ec-text">Indulge in a sophisticated Château Roslane wine tasting experience in the Meknes vineyards.</span>
+          </div>
+          <div class="ec-actions">
+            <button class="ec-btn">⧉</button>
+            <button class="ec-btn">🗑</button>
+          </div>
+        </div>
+        <input class="new-entry" placeholder="New Entry ...">
+      </div>
+      <!-- ── EVENING ROW ── -->
+      <div class="lbl"><span>Evening</span></div>
+      <!-- Sep 8 – Evening -->
+      <div class="sec-cell" id="cell-evening-1">
+        <div class="entry-card" onclick="openPanel(this,'evening',1,0)" data-supplier="Rick's Cafe" data-service="Welcome Dinner – Set Menu" data-cost="55" data-quote="80">
+          <div class="ec-body">
+            <span class="ec-text">Savor a delightful welcome dinner at the iconic Rick's Cafe, immersing yourself in its timeless ambiance.</span>
+            <span class="ec-supplier-tag">Rick's Cafe</span>
+          </div>
+          <div class="ec-actions">
+            <button class="ec-btn">⧉</button>
+            <button class="ec-btn">🗑</button>
+          </div>
+        </div>
+        <input class="new-entry" placeholder="New Entry ...">
+      </div>
+      <!-- Sep 9-11 Evening (empty) -->
+      <div class="sec-cell" id="cell-evening-2"><input class="new-entry" placeholder="New Entry ..."></div>
+      <div class="sec-cell" id="cell-evening-3"><input class="new-entry" placeholder="New Entry ..."></div>
+      <div class="sec-cell" id="cell-evening-4"><input class="new-entry" placeholder="New Entry ..."></div>
+      <!-- ── DRIVING ROW ── -->
+      <div class="lbl mid"><span>Driving</span></div>
+      <div class="drv-cell"><span class="drv-val">N/A</span><button class="drv-copy" title="Copy">⧉</button></div>
+      <div class="drv-cell"><span class="drv-val">4h</span><button class="drv-copy" title="Copy">⧉</button></div>
+      <div class="drv-cell"><span class="drv-val">N/A</span><button class="drv-copy" title="Copy">⧉</button></div>
+      <div class="drv-cell"><span class="drv-val">4h</span><button class="drv-copy" title="Copy">⧉</button></div>
+      <!-- ── LODGING ROW ── -->
+      <div class="lbl mid"><span>Lodging</span></div>
+      <div class="ldg-cell">
+        <input class="ldg-input" id="ldg-1" placeholder="">
+        <button class="ldg-search" onclick="openLodgingModal(1)" title="Find hotel">🔍</button>
+      </div>
+      <div class="ldg-cell">
+        <input class="ldg-input" id="ldg-2" placeholder="">
+        <button class="ldg-search" onclick="openLodgingModal(2)" title="Find hotel">🔍</button>
+      </div>
+      <div class="ldg-cell">
+        <input class="ldg-input" id="ldg-3" placeholder="">
+        <button class="ldg-search" onclick="openLodgingModal(3)" title="Find hotel">🔍</button>
+      </div>
+      <div class="ldg-cell">
+        <input class="ldg-input" id="ldg-4" placeholder="">
+        <button class="ldg-search" onclick="openLodgingModal(4)" title="Find hotel">🔍</button>
+      </div>
+    </div><!-- /proposal-grid -->
+  </div><!-- /grid-scroll -->
+  <!-- ══════════════════════════════════════════
+       ENTRY PANEL (right slide-in)
+  ══════════════════════════════════════════ -->
+  <div class="entry-panel" id="entryPanel">
+    <div class="ep-header">
+      <span class="ep-title">Edit Entry</span>
+      <button class="ep-close" onclick="closePanel()">✕</button>
+    </div>
+    <div class="ep-body">
+      <div class="pf-check">
+        <input type="checkbox" id="epIncluded" checked>
+        <label for="epIncluded">Included in price</label>
+      </div>
+      <div class="pf-divider"></div>
+      <div class="pf">
+        <span class="pf-label">Supplier</span>
+        <div class="pf-row">
+          <input type="text" class="pf-input" id="epSupplier" placeholder="No supplier">
+          <button class="browse-btn" onclick="openSupplierModal()">🔍 Browse</button>
+        </div>
+      </div>
+      <div class="pf">
+        <span class="pf-label">Service</span>
+        <input type="text" class="pf-input" id="epService" placeholder="–" readonly>
+      </div>
+      <div class="pf-2col">
+        <div class="pf">
+          <span class="pf-label">Unit Cost</span>
+          <input type="number" class="pf-input" id="epCost" placeholder="0">
+        </div>
+        <div class="pf">
+          <span class="pf-label">Unit Quote</span>
+          <input type="number" class="pf-input" id="epQuote" placeholder="0">
+        </div>
+      </div>
+      <div class="pf">
+        <span class="pf-label">Notes to Ops</span>
+        <textarea class="pf-textarea" id="epNotes" placeholder="Operational notes…"></textarea>
+      </div>
+      <div class="pf">
+        <span class="pf-label">Start Time</span>
+        <input type="time" class="pf-input" id="epTime">
+      </div>
+      <div class="pf-check">
+        <input type="checkbox" id="epNoGen">
+        <label for="epNoGen">Do not generate in proposal</label>
+      </div>
+    </div>
+    <div class="ep-footer">
+      <button class="ep-save" onclick="savePanel()">Save</button>
+      <button class="ep-cancel" onclick="closePanel()">Cancel</button>
+    </div>
+  </div>
+</div><!-- /editor-body -->
+<!-- ══════════════════════════════════════════
+     SUPPLIER EXPLORER MODAL
+══════════════════════════════════════════ -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">Supplier Explorer</span>
+      <span class="modal-ctx" id="modalCtx">Proposal Editor</span>
+      <div class="srch-wrap">
+        <span class="srch-icon">🔍</span>
+        <input type="text" id="mSearch" placeholder="Search supplier name…" oninput="applyFilters()">
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Filters -->
+      <div class="filters">
+        <div class="fs-title">Supplier</div>
+        <div class="fg">
+          <label class="fg-label">Location</label>
+          <select class="fg-select" id="fLoc" onchange="applyFilters()">
+            <option value="">All locations</option>
+            <option>Casablanca</option><option>Chefchaouen</option>
+            <option>Fes</option><option>Marrakech</option>
+            <option>Rabat</option><option>Agadir</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fg-label">Category</label>
+          <select class="fg-select" id="fCat" onchange="onCatChange()">
+            <option value="">All categories</option>
+            <option>Hotel</option><option>Activity</option>
+            <option>Restaurant</option><option>Guide</option>
+            <option>Driver</option><option>Transportation</option><option>Other</option>
+          </select>
+        </div>
+        <div class="fg hidden" id="hotelCatGrp">
+          <label class="fg-label">Hotel Category</label>
+          <select class="fg-select" id="fHotelCat" onchange="applyFilters()">
+            <option value="">All</option>
+            <option>5+</option><option>5</option><option>4</option>
+            <option>3</option><option>2</option><option>1</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fg-label">Grade</label>
+          <select class="fg-select" id="fGrade" onchange="applyFilters()">
+            <option value="">All grades</option>
+            <option>A+</option><option>A</option><option>A-</option>
+            <option>B+</option><option>B</option><option>B-</option>
+            <option>C+</option><option>C</option><option>C-</option>
+          </select>
+        </div>
+        <div class="fg" id="langGrp">
+          <label class="fg-label">Spoken Languages</label>
+          <select class="fg-select" id="fLang" onchange="applyFilters()">
+            <option value="">Any</option>
+            <option>English</option><option>French</option>
+            <option>Arabic</option><option>Spanish</option>
+            <option>Italian</option><option>German</option>
+          </select>
+        </div>
+        <div class="fs-title mt">Service</div>
+        <div class="fg">
+          <label class="fg-label">Category</label>
+          <select class="fg-select" id="fSvcCat" onchange="applyFilters()">
+            <option value="">All</option>
+            <option>Accommodation</option><option>Experience</option>
+            <option>Guide</option><option>Transportation</option>
+            <option>Activity</option><option>Driver</option>
+            <option>Restaurant</option><option>Other</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fg-label">Sub-category</label>
+          <select class="fg-select" id="fSvcSub" onchange="applyFilters()">
+            <option value="">All</option>
+            <option>Accommodation</option><option>Cooking Class</option>
+            <option>Culture</option><option>Excursion</option>
+            <option>Food</option><option>Guide</option>
+            <option>Hot Air Balloon</option><option>Monument/Site</option>
+            <option>Museum</option><option>Nature / Animals</option>
+            <option>Photoshoot</option><option>Private Driving</option>
+            <option>Restaurant</option><option>Show</option>
+            <option>Trekking</option><option>Well-being</option>
+            <option>Wine Tasting</option><option>ATV</option>
+          </select>
+        </div>
+        <div class="tog-row">
+          <span class="tog-lbl">Show unavailable</span>
+          <label class="tog"><input type="checkbox" id="togUnavail" onchange="applyFilters()"><span class="tog-sl"></span></label>
+        </div>
+        <p class="f-count" id="fCount"></p>
+        <button class="f-clear" onclick="clearFilters()">Clear all filters</button>
+      </div>
+      <!-- Results -->
+      <div class="results-wrap">
+        <div class="results" id="mResults"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const SUPPLIERS = [
+  { id:1, name:"La Mamounia", categories:["Hotel"], hotelCat:"5+", grade:"A+",
+    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:101,name:"Superior Room",      cat:"Accommodation",sub:"Accommodation",cost:580,quote:780,approved:true,disabled:false,tempClosed:false},
+      {id:102,name:"Grand Riad Suite",   cat:"Accommodation",sub:"Accommodation",cost:1200,quote:1600,approved:true,disabled:false,tempClosed:false},
+      {id:103,name:"Breakfast",          cat:"Restaurant",   sub:"Food",         cost:45,quote:65,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:2, name:"Four Seasons Marrakech", categories:["Hotel"], hotelCat:"5+", grade:"A+",
+    loc:"Marrakech", langs:["English","French","Arabic","Spanish"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:201,name:"Superior Room",  cat:"Accommodation",sub:"Accommodation",cost:520,quote:700,approved:true,disabled:false,tempClosed:false},
+      {id:202,name:"Garden Suite",   cat:"Accommodation",sub:"Accommodation",cost:980,quote:1300,approved:true,disabled:false,tempClosed:false},
+      {id:203,name:"Half Board",     cat:"Restaurant",   sub:"Food",         cost:85,quote:120,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:3, name:"Royal Mansour Marrakech", categories:["Hotel"], hotelCat:"5+", grade:"A+",
+    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:301,name:"Riad 1 Bedroom", cat:"Accommodation",sub:"Accommodation",cost:1500,quote:2000,approved:true,disabled:false,tempClosed:false},
+      {id:302,name:"Breakfast",      cat:"Restaurant",   sub:"Food",         cost:55,quote:80,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:4, name:"Sofitel Casablanca Tour Blanche", categories:["Hotel"], hotelCat:"5", grade:"A-",
+    loc:"Casablanca", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:401,name:"Superior Room", cat:"Accommodation",sub:"Accommodation",cost:180,quote:240,approved:true,disabled:false,tempClosed:false},
+      {id:402,name:"Luxury Room",   cat:"Accommodation",sub:"Accommodation",cost:220,quote:295,approved:true,disabled:false,tempClosed:false},
+      {id:403,name:"Breakfast",     cat:"Restaurant",   sub:"Food",         cost:32,quote:45,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:5, name:"Palais Faraj", categories:["Hotel"], hotelCat:"5", grade:"A",
+    loc:"Fes", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:501,name:"Deluxe Room",     cat:"Accommodation",sub:"Accommodation",cost:220,quote:300,approved:true,disabled:false,tempClosed:false},
+      {id:502,name:"Suite Médina",    cat:"Accommodation",sub:"Accommodation",cost:380,quote:520,approved:true,disabled:false,tempClosed:false},
+      {id:503,name:"Breakfast",       cat:"Restaurant",   sub:"Food",         cost:28,quote:40,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:6, name:"Riad Fes – Relais & Châteaux", categories:["Hotel"], hotelCat:"5", grade:"A",
+    loc:"Fes", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:601,name:"Déluxe Room",  cat:"Accommodation",sub:"Accommodation",cost:195,quote:265,approved:true,disabled:false,tempClosed:false},
+      {id:602,name:"Junior Suite", cat:"Accommodation",sub:"Accommodation",cost:280,quote:380,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:7, name:"Dar Rhizlane", categories:["Hotel"], hotelCat:"4", grade:"A-",
+    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:701,name:"Classic Room",    cat:"Accommodation",sub:"Accommodation",cost:140,quote:190,approved:true,disabled:false,tempClosed:false},
+      {id:702,name:"Prestige Suite",  cat:"Accommodation",sub:"Accommodation",cost:260,quote:350,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:8, name:"La Maison Arabe", categories:["Hotel","Restaurant"], hotelCat:"5", grade:"A",
+    loc:"Marrakech", langs:["English","French","Arabic","Italian"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:801,name:"Superior Room",          cat:"Accommodation",sub:"Accommodation",cost:280,quote:380,approved:true,disabled:false,tempClosed:false},
+      {id:802,name:"Traditional Dinner",     cat:"Restaurant",   sub:"Restaurant",   cost:60,quote:85,approved:true,disabled:false,tempClosed:false},
+      {id:803,name:"Moroccan Cooking Class", cat:"Activity",     sub:"Cooking Class",cost:90,quote:125,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:9, name:"Rick's Cafe", categories:["Restaurant"], hotelCat:null, grade:"A",
+    loc:"Casablanca", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:901,name:"Welcome Dinner – Set Menu", cat:"Restaurant",sub:"Restaurant",cost:55,quote:80,approved:true,disabled:false,tempClosed:false},
+      {id:902,name:"À la Carte Dinner",         cat:"Restaurant",sub:"Restaurant",cost:65,quote:92,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:10, name:"Dar Moha", categories:["Restaurant"], hotelCat:null, grade:"A+",
+    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:1001,name:"Traditional Moroccan Dinner",cat:"Restaurant",sub:"Restaurant",  cost:70,quote:100,approved:true,disabled:false,tempClosed:false},
+      {id:1002,name:"Cooking Class",              cat:"Activity",  sub:"Cooking Class",cost:95,quote:130,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:11, name:"Atlas Luxury Tours", categories:["Driver","Transportation"], hotelCat:null, grade:"A-",
+    loc:"Casablanca", langs:["English","French","Arabic","Spanish"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:1101,name:"Private Transfer CMN Airport – Hotel",cat:"Transportation",sub:"Private Driving",cost:85,quote:120,approved:true,disabled:false,tempClosed:false},
+      {id:1102,name:"Full Day Private Driver",              cat:"Driver",        sub:"Private Driving",cost:180,quote:250,approved:true,disabled:false,tempClosed:false},
+      {id:1103,name:"Casablanca → Chefchaouen Transfer",   cat:"Transportation",sub:"Private Driving",cost:320,quote:440,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:12, name:"Mohammed El Fassi – Licensed Guide", categories:["Guide"], hotelCat:null, grade:"A",
+    loc:"Fes", langs:["English","French","Arabic","Spanish"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:1201,name:"Fes Medina Full Day Guide",  cat:"Guide",sub:"Guide",cost:160,quote:220,approved:true,disabled:false,tempClosed:false},
+      {id:1202,name:"Volubilis & Fes Full Day",   cat:"Guide",sub:"Guide",cost:220,quote:300,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:13, name:"Chefchaouen Blue Escapes", categories:["Guide","Activity"], hotelCat:null, grade:"B+",
+    loc:"Chefchaouen", langs:["English","Spanish","Arabic"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:1301,name:"Blue Medina Walking Tour",  cat:"Guide",    sub:"Guide",      cost:80,quote:115,approved:true,disabled:false,tempClosed:false},
+      {id:1302,name:"Photography Walk",          cat:"Experience",sub:"Photoshoot",cost:95,quote:130,approved:true,disabled:false,tempClosed:false},
+      {id:1303,name:"Akchour Waterfalls Trek",   cat:"Activity", sub:"Trekking",   cost:70,quote:100,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:14, name:"Maroc Désert Expériences", categories:["Activity"], hotelCat:null, grade:"B+",
+    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:1401,name:"Sahara Camel Trek",         cat:"Activity",  sub:"Excursion",      cost:85,quote:120,approved:true,disabled:false,tempClosed:false},
+      {id:1402,name:"Quad Biking Agafay Desert", cat:"Activity",  sub:"ATV",            cost:95,quote:130,approved:true,disabled:false,tempClosed:false},
+      {id:1403,name:"Hot Air Balloon Marrakech", cat:"Experience",sub:"Hot Air Balloon",cost:180,quote:250,approved:true,disabled:false,tempClosed:false},
+    ]},
+  { id:15, name:"Riad 72", categories:["Hotel"], hotelCat:"4", grade:"B+",
+    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:true, tempClosed:false,
+    svcs:[
+      {id:1501,name:"Standard Room", cat:"Accommodation",sub:"Accommodation",cost:110,quote:150,approved:true,disabled:false,tempClosed:false},
+    ]},
+];
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let activeCard = null;
+let modalContext = 'supplier'; // 'supplier' | 'lodging'
+let activeLodgingDay = null;
+let expandedCards = new Set();
+// ═══════════════════════════════════════════
+// ENTRY PANEL
+// ═══════════════════════════════════════════
+function openPanel(cardEl, section, day, idx) {
+  if (activeCard === cardEl) { closePanel(); return; }
+  if (activeCard) activeCard.classList.remove('active');
+  activeCard = cardEl;
+  cardEl.classList.add('active');
+  // Load existing data from data attributes or defaults
+  document.getElementById('epSupplier').value = cardEl.dataset.supplier || '';
+  document.getElementById('epService').value  = cardEl.dataset.service  || '';
+  document.getElementById('epCost').value     = cardEl.dataset.cost     || '';
+  document.getElementById('epQuote').value    = cardEl.dataset.quote    || '';
+  document.getElementById('epNotes').value    = '';
+  document.getElementById('epTime').value     = '';
+  document.getElementById('epIncluded').checked = !cardEl.dataset.notIncluded;
+  document.getElementById('epNoGen').checked    = false;
+  // Highlight filled fields
+  ['epSupplier','epService','epCost','epQuote'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.toggle('filled', !!el.value);
+  });
+  document.getElementById('entryPanel').classList.add('open');
+}
+function closePanel() {
+  if (activeCard) activeCard.classList.remove('active');
+  activeCard = null;
+  document.getElementById('entryPanel').classList.remove('open');
+}
+function savePanel() {
+  if (!activeCard) return;
+  const supplier = document.getElementById('epSupplier').value.trim();
+  const service  = document.getElementById('epService').value.trim();
+  const cost     = document.getElementById('epCost').value;
+  const quote    = document.getElementById('epQuote').value;
+  // Update card data attributes
+  activeCard.dataset.supplier = supplier;
+  activeCard.dataset.service  = service;
+  activeCard.dataset.cost     = cost;
+  activeCard.dataset.quote    = quote;
+  // Update supplier tag on card
+  let tag = activeCard.querySelector('.ec-supplier-tag');
+  if (supplier) {
+    if (!tag) {
+      tag = document.createElement('span');
+      tag.className = 'ec-supplier-tag';
+      activeCard.querySelector('.ec-body').appendChild(tag);
+    }
+    tag.textContent = supplier;
+  } else if (tag) { tag.remove(); }
+  closePanel();
+  showToast('✓ Entry saved');
+}
+// ═══════════════════════════════════════════
+// MODAL OPEN/CLOSE
+// ═══════════════════════════════════════════
+function openSupplierModal() {
+  modalContext = 'supplier';
+  document.getElementById('modalCtx').textContent = 'Proposal Editor';
+  // Clear hotel category pre-filter
+  document.getElementById('fCat').value = '';
+  document.getElementById('hotelCatGrp').classList.add('hidden');
+  document.getElementById('fHotelCat').value = '';
+  openModal();
+}
+function openLodgingModal(day) {
+  modalContext = 'lodging';
+  activeLodgingDay = day;
+  document.getElementById('modalCtx').textContent = 'Lodging – Day ' + day;
+  // Pre-filter to Hotel
+  document.getElementById('fCat').value = 'Hotel';
+  document.getElementById('hotelCatGrp').classList.remove('hidden');
+  openModal();
+}
+function openModal() {
+  document.getElementById('mSearch').value = '';
+  document.getElementById('overlay').classList.add('active');
+  expandedCards.clear();
+  applyFilters();
+}
+function closeModal() {
+  document.getElementById('overlay').classList.remove('active');
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+// ═══════════════════════════════════════════
+// FILTER LOGIC
+// ═══════════════════════════════════════════
+function onCatChange() {
+  const v = document.getElementById('fCat').value;
+  const isHotel = v === 'Hotel';
+  document.getElementById('hotelCatGrp').classList.toggle('hidden', !isHotel);
+  document.getElementById('langGrp').classList.toggle('hidden', isHotel);
+  if (!isHotel) document.getElementById('fHotelCat').value = '';
+  if (isHotel)  document.getElementById('fLang').value = '';
+  applyFilters();
+}
+function clearFilters() {
+  ['fLoc','fCat','fHotelCat','fGrade','fLang','fSvcCat','fSvcSub'].forEach(id =>
+    document.getElementById(id).value = '');
+  document.getElementById('mSearch').value = '';
+  document.getElementById('togUnavail').checked = false;
+  document.getElementById('hotelCatGrp').classList.add('hidden');
+  applyFilters();
+}
+function applyFilters() {
+  const search   = document.getElementById('mSearch').value.toLowerCase().trim();
+  const loc      = document.getElementById('fLoc').value;
+  const cat      = document.getElementById('fCat').value;
+  const hotelCat = document.getElementById('fHotelCat').value;
+  const grade    = document.getElementById('fGrade').value;
+  const lang     = document.getElementById('fLang').value;
+  const svcCat   = document.getElementById('fSvcCat').value;
+  const svcSub   = document.getElementById('fSvcSub').value;
+  const showAll  = document.getElementById('togUnavail').checked;
+  const filtered = SUPPLIERS.filter(s => {
+    if (!s.approved) return false;
+    if (!showAll && (s.disabled || s.tempClosed)) return false;
+    if (search   && !s.name.toLowerCase().includes(search)) return false;
+    if (loc      && s.loc !== loc) return false;
+    if (cat      && !s.categories.includes(cat)) return false;
+    if (hotelCat && s.hotelCat !== hotelCat) return false;
+    if (grade    && s.grade !== grade) return false;
+    if (lang     && !s.langs.includes(lang)) return false;
+    if (svcCat || svcSub) {
+      const hasMatch = s.svcs.some(sv => {
+        if (!sv.approved) return false;
+        if (!showAll && (sv.disabled || sv.tempClosed)) return false;
+        if (svcCat && sv.cat !== svcCat) return false;
+        if (svcSub && sv.sub !== svcSub) return false;
+        return true;
+      });
+      if (!hasMatch) return false;
+    }
+    return true;
+  });
+  if (filtered.length <= 2) filtered.forEach(s => expandedCards.add(s.id));
+  renderResults(filtered, showAll, svcCat, svcSub);
+  document.getElementById('fCount').textContent =
+    filtered.length === 0 ? 'No results' : `${filtered.length} supplier${filtered.length !== 1 ? 's' : ''}`;
+}
+// ═══════════════════════════════════════════
+// RENDER RESULTS
+// ═══════════════════════════════════════════
+function renderResults(list, showAll, svcCat, svcSub) {
+  const el = document.getElementById('mResults');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-txt">No suppliers match your filters</div><div class="empty-sub">Try adjusting or clearing the filters</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(s => {
+    const isOpen = expandedCards.has(s.id);
+    const unavail = s.disabled
+      ? `<span class="s-unavail dis"> · Disabled</span>`
+      : s.tempClosed ? `<span class="s-unavail cls"> · Temporarily closed</span>` : '';
+    const catBadges = s.categories.map(c => `<span class="badge b-cat">${c}</span>`).join('');
+    const hotelBadge = s.hotelCat ? `<span class="badge b-hotel">${s.hotelCat}★</span>` : '';
+    const langBadge  = s.categories.includes('Guide')
+      ? `<span class="badge b-lang">🗣 ${s.langs.slice(0,2).join(', ')}</span>` : '';
+    const visible = s.svcs.filter(sv => {
+      if (!sv.approved) return false;
+      if (!showAll && (sv.disabled || sv.tempClosed)) return false;
+      if (svcCat && sv.cat !== svcCat) return false;
+      if (svcSub && sv.sub !== svcSub) return false;
+      return true;
+    });
+    const rows = visible.map(sv => {
+      const sn = sv.name.replace(/'/g,"&#39;");
+      const sp = s.name.replace(/'/g,"&#39;");
+      return `<tr>
+        <td><div class="svc-name">${sv.name}</div><div class="svc-sub">${sv.cat} · ${sv.sub}</div></td>
+        <td class="td-r"><span class="p-cost">$${sv.cost}</span></td>
+        <td class="td-r"><span class="p-quote">$${sv.quote}</span></td>
+        <td class="td-r"><button class="sel-btn" onclick="selectService('${sp}','${sn}',${sv.cost},${sv.quote})">Select</button></td>
+      </tr>`;
+    }).join('');
+    return `<div class="s-card" id="sc-${s.id}">
+      <div class="s-hdr ${isOpen?'open':''}" onclick="toggleCard(${s.id})">
+        <div class="s-left">
+          <div><span class="s-name">${s.name}</span>${unavail}</div>
+          <div class="s-meta">${catBadges}<span class="badge b-grade">${s.grade}</span><span class="badge b-loc">📍 ${s.loc}</span>${hotelBadge}${langBadge}</div>
+        </div>
+        <div class="s-right">
+          <span class="s-count">${visible.length} service${visible.length!==1?'s':''}</span>
+          <span class="s-chev ${isOpen?'open':''}">▼</span>
+        </div>
+      </div>
+      <div class="svc-list ${isOpen?'open':''}" id="svl-${s.id}">
+        <table class="svc-tbl">
+          <thead><tr><th>Service</th><th>Unit Cost</th><th>Unit Quote</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleCard(id) {
+  const hdr  = document.querySelector(`#sc-${id} .s-hdr`);
+  const list = document.getElementById(`svl-${id}`);
+  const chev = hdr.querySelector('.s-chev');
+  if (expandedCards.has(id)) {
+    expandedCards.delete(id);
+    hdr.classList.remove('open'); list.classList.remove('open'); chev.classList.remove('open');
+  } else {
+    expandedCards.add(id);
+    hdr.classList.add('open'); list.classList.add('open'); chev.classList.add('open');
+  }
+}
+// ═══════════════════════════════════════════
+// SELECT SERVICE → AUTOFILL
+// ═══════════════════════════════════════════
+function selectService(supplier, service, cost, quote) {
+  if (modalContext === 'supplier') {
+    document.getElementById('epSupplier').value = supplier;
+    document.getElementById('epService').value  = service;
+    document.getElementById('epCost').value     = cost;
+    document.getElementById('epQuote').value    = quote;
+    ['epSupplier','epService','epCost','epQuote'].forEach(id =>
+      document.getElementById(id).classList.add('filled'));
+    showToast(`✓ "${service}" selected · fields autofilled`);
+  } else if (modalContext === 'lodging') {
+    const inp = document.getElementById(`ldg-${activeLodgingDay}`);
+    if (inp) { inp.value = `${supplier}`; inp.classList.add('filled'); }
+    showToast(`✓ ${supplier} set as lodging for Day ${activeLodgingDay}`);
+  }
+  closeModal();
+}
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
