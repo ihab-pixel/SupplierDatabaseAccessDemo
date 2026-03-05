@@ -290,6 +290,7 @@ overflow-y: scroll; padding: 14px; padding-bottom: 52px;
 .b-loc  { background: #f0faf0; color: #2a7035; }
 .b-hotel { background: #fffbe6; color: #a07000; }
 .b-lang { background: #f5f0ff; color: #6b3fa0; }
+.b-bkg  { background: #f0fdf4; color: #166534; }
 .s-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: 12px; }
 .s-count { font-size: 12px; color: #bbb; }
 .s-chev { font-size: 11px; color: #ccc; transition: transform .2s; }
@@ -533,15 +534,23 @@ overflow-y: scroll; padding: 14px; padding-bottom: 52px;
 <span class="pf-label">Service</span>
 <input type="text" class="pf-input" id="epService" placeholder="–" readonly>
 </div>
+<div class="pf">
+<span class="pf-label">Location</span>
+<input type="text" class="pf-input" id="epLocation" placeholder="–">
+</div>
 <div class="pf-2col">
 <div class="pf">
 <span class="pf-label">Unit Cost</span>
-<input type="number" class="pf-input" id="epCost" placeholder="0">
+<input type="number" class="pf-input" id="epCost" placeholder="0" oninput="updateMargin()">
 </div>
 <div class="pf">
 <span class="pf-label">Unit Quote</span>
-<input type="number" class="pf-input" id="epQuote" placeholder="0">
+<input type="number" class="pf-input" id="epQuote" placeholder="0" oninput="updateMargin()">
 </div>
+</div>
+<div class="pf">
+<span class="pf-label">Margin</span>
+<input type="number" class="pf-input" id="epMargin" placeholder="–" readonly>
 </div>
 <div class="pf">
 <span class="pf-label">Notes to Ops</span>
@@ -572,7 +581,7 @@ overflow-y: scroll; padding: 14px; padding-bottom: 52px;
 <span class="modal-ctx" id="modalCtx">Proposal Editor</span>
 <div class="srch-wrap">
 <span class="srch-icon">🔍</span>
-<input type="text" id="mSearch" placeholder="Search supplier name…" oninput="applyFilters()">
+<input type="text" id="mSearch" placeholder="Search suppliers and services…" oninput="scheduleSearch()">
 </div>
 <button class="modal-close" onclick="closeModal()">✕</button>
 </div>
@@ -583,51 +592,25 @@ overflow-y: scroll; padding: 14px; padding-bottom: 52px;
 <div class="fg">
 <label class="fg-label">Location</label>
 <select class="fg-select" id="fLoc" onchange="applyFilters()">
-<option value="">All locations</option>
-<option>Casablanca</option><option>Chefchaouen</option>
-<option>Fes</option><option>Marrakech</option>
-<option>Rabat</option><option>Agadir</option>
+<option value="">All</option>
 </select>
 </div>
 <div class="fg">
-<label class="fg-label">Category</label>
-<select class="fg-select" id="fCat" onchange="onCatChange()">
-<option value="">All categories</option>
-<option>Hotel</option><option>Activity</option>
-<option>Restaurant</option><option>Guide</option>
-<option>Driver</option><option>Transportation</option><option>Other</option>
-</select>
-</div>
-<div class="fg hidden" id="hotelCatGrp">
 <label class="fg-label">Hotel Category</label>
 <select class="fg-select" id="fHotelCat" onchange="applyFilters()">
 <option value="">All</option>
-<option>5+</option><option>5</option><option>4</option>
-<option>3</option><option>2</option><option>1</option>
 </select>
 </div>
 <div class="fg">
 <label class="fg-label">Grade</label>
 <select class="fg-select" id="fGrade" onchange="applyFilters()">
-<option value="">All grades</option>
-<option>A+</option><option>A</option><option>A-</option>
-<option>B+</option><option>B</option><option>B-</option>
-<option>C+</option><option>C</option><option>C-</option>
-</select>
-</div>
-<div class="fg" id="langGrp">
-<label class="fg-label">Spoken Languages</label>
-<select class="fg-select" id="fLang" onchange="applyFilters()">
-<option value="">Any</option>
-<option>English</option><option>French</option>
-<option>Arabic</option><option>Spanish</option>
-<option>Italian</option><option>German</option>
+<option value="">All</option>
 </select>
 </div>
 <div class="fg">
-<label class="fg-label">Average Bookings per Month</label>
+<label class="fg-label">Avg Bookings / Month</label>
 <select class="fg-select" id="fAvgBookings" onchange="applyFilters()">
-<option value="">Any</option>
+<option value="">All</option>
 <option value="5">5+</option>
 <option value="10">10+</option>
 <option value="20">20+</option>
@@ -637,7 +620,7 @@ overflow-y: scroll; padding: 14px; padding-bottom: 52px;
 <div class="fs-title mt">Service</div>
 <div class="fg">
 <label class="fg-label">Category</label>
-<select class="fg-select" id="fSvcCat" onchange="applyFilters()">
+<select class="fg-select" id="fSvcCat" onchange="onSvcCatChange()">
 <option value="">All</option>
 <option>Accommodation</option><option>Experience</option>
 <option>Guide</option><option>Transportation</option>
@@ -660,12 +643,7 @@ overflow-y: scroll; padding: 14px; padding-bottom: 52px;
 <option>Wine Tasting</option><option>ATV</option>
 </select>
 </div>
-<div class="tog-row">
-<span class="tog-lbl">Show unavailable</span>
-<label class="tog"><input type="checkbox" id="togUnavail" onchange="applyFilters()"><span class="tog-sl"></span></label>
-</div>
 <p class="f-count" id="fCount"></p>
-<button class="f-clear" onclick="clearFilters()">Clear all filters</button>
 </div>
 <!-- Results -->
 <div class="results-wrap">
@@ -679,103 +657,167 @@ overflow-y: scroll; padding: 14px; padding-bottom: 52px;
 // ═══════════════════════════════════════════
 // DATA
 // ═══════════════════════════════════════════
+// genBookings: creates n confirmed booking records spread across last 90 days
+// Avg bookings/month = count of confirmed bookings created in last 90 days / 3
+function genBookings(n, seed) {
+  const base = new Date('2026-03-05').getTime();
+  const bkgs = [];
+  for (let i = 0; i < n; i++) {
+    const daysAgo = 1 + ((i * 7 + seed * 3) % 89);
+    const d = new Date(base - daysAgo * 86400000).toISOString().slice(0,10);
+    bkgs.push({status:'confirmed', createdAt:d});
+  }
+  return bkgs;
+}
+function getAvgBookings(s) {
+  const cutoff = new Date('2026-03-05').getTime() - 90 * 86400000;
+  const count = (s.bookings || []).filter(b =>
+    b.status === 'confirmed' && new Date(b.createdAt).getTime() >= cutoff
+  ).length;
+  return Math.round(count / 3);
+}
 const SUPPLIERS = [
-  { id:1, name:"La Mamounia", categories:["Hotel"], hotelCat:"5+", grade:"A+",
-loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:38, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:101,name:"Superior Room",      cat:"Accommodation",sub:"Accommodation",cost:580,quote:780,approved:true,disabled:false,tempClosed:false},
-      {id:102,name:"Grand Riad Suite",   cat:"Accommodation",sub:"Accommodation",cost:1200,quote:1600,approved:true,disabled:false,tempClosed:false},
-      {id:103,name:"Breakfast",          cat:"Restaurant",   sub:"Food",         cost:45,quote:65,approved:true,disabled:false,tempClosed:false},
+  { id:1, name:"La Mamounia",
+    desc:"Legendary 5-star palace hotel in Marrakech blending Moorish architecture with art deco style",
+    categories:["Hotel"], hotelCat:"5+", grade:"A+", loc:"Marrakech",
+    langs:["English","French","Arabic"], bookings:genBookings(114,1),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:101,name:"Superior Room",    desc:"Elegant room with pool or garden views and Moroccan décor",    cat:"Accommodation",sub:"Accommodation",cost:580, quote:780, approved:true,disabled:false,tempClosed:false},
+      {id:102,name:"Grand Riad Suite", desc:"Expansive private riad suite with plunge pool and butler service",cat:"Accommodation",sub:"Accommodation",cost:1200,quote:1600,approved:true,disabled:false,tempClosed:false},
+      {id:103,name:"Breakfast",        desc:"Full Moroccan and continental breakfast buffet",                cat:"Restaurant",   sub:"Food",         cost:45,  quote:65,  approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:2, name:"Four Seasons Marrakech", categories:["Hotel"], hotelCat:"5+", grade:"A+",
-loc:"Marrakech", langs:["English","French","Arabic","Spanish"], avgBookingsPerMonth:31, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:201,name:"Superior Room",  cat:"Accommodation",sub:"Accommodation",cost:520,quote:700,approved:true,disabled:false,tempClosed:false},
-      {id:202,name:"Garden Suite",   cat:"Accommodation",sub:"Accommodation",cost:980,quote:1300,approved:true,disabled:false,tempClosed:false},
-      {id:203,name:"Half Board",     cat:"Restaurant",   sub:"Food",         cost:85,quote:120,approved:true,disabled:false,tempClosed:false},
+  { id:2, name:"Four Seasons Marrakech",
+    desc:"Contemporary luxury resort featuring lush gardens and world-class amenities in Marrakech",
+    categories:["Hotel"], hotelCat:"5+", grade:"A+", loc:"Marrakech",
+    langs:["English","French","Arabic","Spanish"], bookings:genBookings(93,2),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:201,name:"Superior Room", desc:"Spacious room overlooking lush resort gardens",           cat:"Accommodation",sub:"Accommodation",cost:520,quote:700, approved:true,disabled:false,tempClosed:false},
+      {id:202,name:"Garden Suite",  desc:"Private suite with direct access to landscaped gardens",  cat:"Accommodation",sub:"Accommodation",cost:980,quote:1300,approved:true,disabled:false,tempClosed:false},
+      {id:203,name:"Half Board",    desc:"Daily breakfast and dinner at resort restaurants",         cat:"Restaurant",   sub:"Food",         cost:85, quote:120, approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:3, name:"Royal Mansour Marrakech", categories:["Hotel"], hotelCat:"5+", grade:"A+",
-loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:24, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:301,name:"Riad 1 Bedroom", cat:"Accommodation",sub:"Accommodation",cost:1500,quote:2000,approved:true,disabled:false,tempClosed:false},
-      {id:302,name:"Breakfast",      cat:"Restaurant",   sub:"Food",         cost:55,quote:80,approved:true,disabled:false,tempClosed:false},
+  { id:3, name:"Royal Mansour Marrakech",
+    desc:"Ultra-luxury medina palace commissioned by King Mohammed VI with private riads",
+    categories:["Hotel"], hotelCat:"5+", grade:"A+", loc:"Marrakech",
+    langs:["English","French","Arabic"], bookings:genBookings(72,3),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:301,name:"Riad 1 Bedroom", desc:"Private three-storey riad with rooftop terrace and plunge pool", cat:"Accommodation",sub:"Accommodation",cost:1500,quote:2000,approved:true,disabled:false,tempClosed:false},
+      {id:302,name:"Breakfast",      desc:"Gourmet breakfast served in your private riad or the restaurant",  cat:"Restaurant",   sub:"Food",         cost:55,  quote:80,  approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:4, name:"Sofitel Casablanca Tour Blanche", categories:["Hotel"], hotelCat:"5", grade:"A-",
-loc:"Casablanca", langs:["English","French","Arabic"], avgBookingsPerMonth:17, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:401,name:"Superior Room", cat:"Accommodation",sub:"Accommodation",cost:180,quote:240,approved:true,disabled:false,tempClosed:false},
-      {id:402,name:"Luxury Room",   cat:"Accommodation",sub:"Accommodation",cost:220,quote:295,approved:true,disabled:false,tempClosed:false},
-      {id:403,name:"Breakfast",     cat:"Restaurant",   sub:"Food",         cost:32,quote:45,approved:true,disabled:false,tempClosed:false},
+  { id:4, name:"Sofitel Casablanca Tour Blanche",
+    desc:"Modern 5-star hotel in the heart of Casablanca's business and cultural district",
+    categories:["Hotel"], hotelCat:"5", grade:"A-", loc:"Casablanca",
+    langs:["English","French","Arabic"], bookings:genBookings(51,4),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:401,name:"Superior Room", desc:"Contemporary room with city views and luxury amenities",   cat:"Accommodation",sub:"Accommodation",cost:180,quote:240,approved:true,disabled:false,tempClosed:false},
+      {id:402,name:"Luxury Room",   desc:"Upgraded room with premium furnishings and lounge access", cat:"Accommodation",sub:"Accommodation",cost:220,quote:295,approved:true,disabled:false,tempClosed:false},
+      {id:403,name:"Breakfast",     desc:"Buffet breakfast with local and international options",    cat:"Restaurant",   sub:"Food",         cost:32, quote:45, approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:5, name:"Palais Faraj", categories:["Hotel"], hotelCat:"5", grade:"A",
-loc:"Fes", langs:["English","French","Arabic"], avgBookingsPerMonth:13, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:501,name:"Deluxe Room",     cat:"Accommodation",sub:"Accommodation",cost:220,quote:300,approved:true,disabled:false,tempClosed:false},
-      {id:502,name:"Suite Médina",    cat:"Accommodation",sub:"Accommodation",cost:380,quote:520,approved:true,disabled:false,tempClosed:false},
-      {id:503,name:"Breakfast",       cat:"Restaurant",   sub:"Food",         cost:28,quote:40,approved:true,disabled:false,tempClosed:false},
+  { id:5, name:"Palais Faraj",
+    desc:"Palatial riad hotel perched above the ancient Fes medina with panoramic views",
+    categories:["Hotel"], hotelCat:"5", grade:"A", loc:"Fes",
+    langs:["English","French","Arabic"], bookings:genBookings(39,5),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:501,name:"Deluxe Room",  desc:"Beautifully appointed room with medina or garden views", cat:"Accommodation",sub:"Accommodation",cost:220,quote:300,approved:true,disabled:false,tempClosed:false},
+      {id:502,name:"Suite Médina", desc:"Spacious suite with private terrace overlooking the old city", cat:"Accommodation",sub:"Accommodation",cost:380,quote:520,approved:true,disabled:false,tempClosed:false},
+      {id:503,name:"Breakfast",    desc:"Traditional Moroccan breakfast with fresh-baked pastries",  cat:"Restaurant",   sub:"Food",         cost:28, quote:40, approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:6, name:"Riad Fes – Relais & Châteaux", categories:["Hotel"], hotelCat:"5", grade:"A",
-loc:"Fes", langs:["English","French","Arabic"], avgBookingsPerMonth:21, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:601,name:"Déluxe Room",  cat:"Accommodation",sub:"Accommodation",cost:195,quote:265,approved:true,disabled:false,tempClosed:false},
-      {id:602,name:"Junior Suite", cat:"Accommodation",sub:"Accommodation",cost:280,quote:380,approved:true,disabled:false,tempClosed:false},
+  { id:6, name:"Riad Fes – Relais & Châteaux",
+    desc:"Relais & Châteaux property in a meticulously restored 19th-century palace in Fes",
+    categories:["Hotel"], hotelCat:"5", grade:"A", loc:"Fes",
+    langs:["English","French","Arabic"], bookings:genBookings(63,6),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:601,name:"Déluxe Room",  desc:"Elegant room with traditional zellij tilework and modern comforts", cat:"Accommodation",sub:"Accommodation",cost:195,quote:265,approved:true,disabled:false,tempClosed:false},
+      {id:602,name:"Junior Suite", desc:"Generous suite with sitting area and classic Fassi interior design", cat:"Accommodation",sub:"Accommodation",cost:280,quote:380,approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:7, name:"Dar Rhizlane", categories:["Hotel"], hotelCat:"4", grade:"A-",
-loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:9, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:701,name:"Classic Room",    cat:"Accommodation",sub:"Accommodation",cost:140,quote:190,approved:true,disabled:false,tempClosed:false},
-      {id:702,name:"Prestige Suite",  cat:"Accommodation",sub:"Accommodation",cost:260,quote:350,approved:true,disabled:false,tempClosed:false},
+  { id:7, name:"Dar Rhizlane",
+    desc:"Intimate Marrakech palace hotel with exquisite Moroccan craftsmanship and private gardens",
+    categories:["Hotel"], hotelCat:"4", grade:"A-", loc:"Marrakech",
+    langs:["English","French","Arabic"], bookings:genBookings(27,7),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:701,name:"Classic Room",   desc:"Comfortable room with traditional Moroccan decor and courtyard access",  cat:"Accommodation",sub:"Accommodation",cost:140,quote:190,approved:true,disabled:false,tempClosed:false},
+      {id:702,name:"Prestige Suite", desc:"Generous suite with private terrace and plunge pool",                    cat:"Accommodation",sub:"Accommodation",cost:260,quote:350,approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:8, name:"La Maison Arabe", categories:["Hotel","Restaurant"], hotelCat:"5", grade:"A",
-loc:"Marrakech", langs:["English","French","Arabic","Italian"], avgBookingsPerMonth:16, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:801,name:"Superior Room",          cat:"Accommodation",sub:"Accommodation",cost:280,quote:380,approved:true,disabled:false,tempClosed:false},
-      {id:802,name:"Traditional Dinner",     cat:"Restaurant",   sub:"Restaurant",   cost:60,quote:85,approved:true,disabled:false,tempClosed:false},
-      {id:803,name:"Moroccan Cooking Class", cat:"Activity",     sub:"Cooking Class",cost:90,quote:125,approved:true,disabled:false,tempClosed:false},
+  { id:8, name:"La Maison Arabe",
+    desc:"Historic pioneer riad offering authentic Moroccan hospitality, fine dining, and cooking classes",
+    categories:["Hotel","Restaurant"], hotelCat:"5", grade:"A", loc:"Marrakech",
+    langs:["English","French","Arabic","Italian"], bookings:genBookings(48,8),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:801,name:"Superior Room",          desc:"Charming room in an iconic riad with courtyard views",       cat:"Accommodation",sub:"Accommodation",cost:280,quote:380,approved:true,disabled:false,tempClosed:false},
+      {id:802,name:"Traditional Dinner",     desc:"Elaborate Moroccan dinner featuring tagines and pastilla",   cat:"Restaurant",   sub:"Restaurant",   cost:60, quote:85, approved:true,disabled:false,tempClosed:false},
+      {id:803,name:"Moroccan Cooking Class", desc:"Hands-on class learning authentic Moroccan recipes",         cat:"Activity",     sub:"Cooking Class",cost:90, quote:125,approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:9, name:"Rick's Cafe", categories:["Restaurant"], hotelCat:null, grade:"A",
-loc:"Casablanca", langs:["English","French","Arabic"], avgBookingsPerMonth:22, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:901,name:"Welcome Dinner – Set Menu", cat:"Restaurant",sub:"Restaurant",cost:55,quote:80,approved:true,disabled:false,tempClosed:false},
-      {id:902,name:"À la Carte Dinner",         cat:"Restaurant",sub:"Restaurant",cost:65,quote:92,approved:true,disabled:false,tempClosed:false},
+  { id:9, name:"Rick's Cafe",
+    desc:"Iconic restaurant inspired by the classic film Casablanca, celebrated for live jazz and Moroccan cuisine",
+    categories:["Restaurant"], hotelCat:null, grade:"A", loc:"Casablanca",
+    langs:["English","French","Arabic"], bookings:genBookings(66,9),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:901,name:"Welcome Dinner – Set Menu", desc:"Three-course set menu featuring signature Moroccan dishes and live jazz", cat:"Restaurant",sub:"Restaurant",cost:55,quote:80, approved:true,disabled:false,tempClosed:false},
+      {id:902,name:"À la Carte Dinner",         desc:"Full à la carte experience in the atmospheric Art Deco dining room",     cat:"Restaurant",sub:"Restaurant",cost:65,quote:92, approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:10, name:"Dar Moha", categories:["Restaurant"], hotelCat:null, grade:"A+",
-loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:28, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:1001,name:"Traditional Moroccan Dinner",cat:"Restaurant",sub:"Restaurant",  cost:70,quote:100,approved:true,disabled:false,tempClosed:false},
-      {id:1002,name:"Cooking Class",              cat:"Activity",  sub:"Cooking Class",cost:95,quote:130,approved:true,disabled:false,tempClosed:false},
+  { id:10, name:"Dar Moha",
+    desc:"Award-winning fine dining restaurant in a renovated Marrakech riad, known for creative Moroccan cuisine",
+    categories:["Restaurant"], hotelCat:null, grade:"A+", loc:"Marrakech",
+    langs:["English","French","Arabic"], bookings:genBookings(84,10),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:1001,name:"Traditional Moroccan Dinner",desc:"Chef Moha's signature multi-course tasting menu",          cat:"Restaurant",sub:"Restaurant",  cost:70,quote:100,approved:true,disabled:false,tempClosed:false},
+      {id:1002,name:"Cooking Class",              desc:"Learn to prepare classic Moroccan dishes with Chef Moha",  cat:"Activity",  sub:"Cooking Class",cost:95,quote:130,approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:11, name:"Atlas Luxury Tours", categories:["Driver","Transportation"], hotelCat:null, grade:"A-",
-loc:"Casablanca", langs:["English","French","Arabic","Spanish"], avgBookingsPerMonth:33, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:1101,name:"Private Transfer CMN Airport – Hotel",cat:"Transportation",sub:"Private Driving",cost:85,quote:120,approved:true,disabled:false,tempClosed:false},
-      {id:1102,name:"Full Day Private Driver",              cat:"Driver",        sub:"Private Driving",cost:180,quote:250,approved:true,disabled:false,tempClosed:false},
-      {id:1103,name:"Casablanca → Chefchaouen Transfer",   cat:"Transportation",sub:"Private Driving",cost:320,quote:440,approved:true,disabled:false,tempClosed:false},
+  { id:11, name:"Atlas Luxury Tours",
+    desc:"Premium private transport and chauffeur services connecting Morocco's major cities",
+    categories:["Driver","Transportation"], hotelCat:null, grade:"A-", loc:"Casablanca",
+    langs:["English","French","Arabic","Spanish"], bookings:genBookings(99,11),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:1101,name:"Private Transfer CMN Airport – Hotel",desc:"Meet & greet at arrival hall, luggage assistance, luxury sedan to hotel",cat:"Transportation",sub:"Private Driving",cost:85, quote:120,approved:true,disabled:false,tempClosed:false},
+      {id:1102,name:"Full Day Private Driver",              desc:"Dedicated chauffeur and vehicle for a full day of touring",            cat:"Driver",        sub:"Private Driving",cost:180,quote:250,approved:true,disabled:false,tempClosed:false},
+      {id:1103,name:"Casablanca → Chefchaouen Transfer",   desc:"Comfortable long-distance transfer with an experienced driver",        cat:"Transportation",sub:"Private Driving",cost:320,quote:440,approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:12, name:"Mohammed El Fassi – Licensed Guide", categories:["Guide"], hotelCat:null, grade:"A",
-loc:"Fes", langs:["English","French","Arabic","Spanish"], avgBookingsPerMonth:7, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:1201,name:"Fes Medina Full Day Guide",  cat:"Guide",sub:"Guide",cost:160,quote:220,approved:true,disabled:false,tempClosed:false},
-      {id:1202,name:"Volubilis & Fes Full Day",   cat:"Guide",sub:"Guide",cost:220,quote:300,approved:true,disabled:false,tempClosed:false},
+  { id:12, name:"Mohammed El Fassi – Licensed Guide",
+    desc:"Official licensed guide specialising in the ancient medinas and Roman ruins of northern Morocco",
+    categories:["Guide"], hotelCat:null, grade:"A", loc:"Fes",
+    langs:["English","French","Arabic","Spanish"], bookings:genBookings(21,12),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:1201,name:"Fes Medina Full Day Guide",desc:"Expert guided tour through the labyrinthine streets of the Fes el-Bali medina", cat:"Guide",sub:"Guide",cost:160,quote:220,approved:true,disabled:false,tempClosed:false},
+      {id:1202,name:"Volubilis & Fes Full Day", desc:"Day trip combining the Roman ruins of Volubilis with a Fes medina visit",       cat:"Guide",sub:"Guide",cost:220,quote:300,approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:13, name:"Chefchaouen Blue Escapes", categories:["Guide","Activity"], hotelCat:null, grade:"B+",
-loc:"Chefchaouen", langs:["English","Spanish","Arabic"], avgBookingsPerMonth:11, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:1301,name:"Blue Medina Walking Tour",  cat:"Guide",    sub:"Guide",      cost:80,quote:115,approved:true,disabled:false,tempClosed:false},
-      {id:1302,name:"Photography Walk",          cat:"Experience",sub:"Photoshoot",cost:95,quote:130,approved:true,disabled:false,tempClosed:false},
-      {id:1303,name:"Akchour Waterfalls Trek",   cat:"Activity", sub:"Trekking",   cost:70,quote:100,approved:true,disabled:false,tempClosed:false},
+  { id:13, name:"Chefchaouen Blue Escapes",
+    desc:"Local guide and outdoor activity specialist in the Blue Pearl of Morocco",
+    categories:["Guide","Activity"], hotelCat:null, grade:"B+", loc:"Chefchaouen",
+    langs:["English","Spanish","Arabic"], bookings:genBookings(33,13),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:1301,name:"Blue Medina Walking Tour", desc:"2-hour walk through Chefchaouen's iconic blue-painted streets and squares",  cat:"Guide",    sub:"Guide",      cost:80,quote:115,approved:true,disabled:false,tempClosed:false},
+      {id:1302,name:"Photography Walk",          desc:"Golden-hour photography tour of the most scenic spots in the blue medina",  cat:"Experience",sub:"Photoshoot",cost:95,quote:130,approved:true,disabled:false,tempClosed:false},
+      {id:1303,name:"Akchour Waterfalls Trek",   desc:"Full-day hike to the stunning Akchour waterfalls in the Rif Mountains",    cat:"Activity", sub:"Trekking",   cost:70,quote:100,approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:14, name:"Maroc Désert Expériences", categories:["Activity"], hotelCat:null, grade:"B+",
-loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:19, approved:true, disabled:false, tempClosed:false,
-svcs:[
-      {id:1401,name:"Sahara Camel Trek",         cat:"Activity",  sub:"Excursion",      cost:85,quote:120,approved:true,disabled:false,tempClosed:false},
-      {id:1402,name:"Quad Biking Agafay Desert", cat:"Activity",  sub:"ATV",            cost:95,quote:130,approved:true,disabled:false,tempClosed:false},
-      {id:1403,name:"Hot Air Balloon Marrakech", cat:"Experience",sub:"Hot Air Balloon",cost:180,quote:250,approved:true,disabled:false,tempClosed:false},
+  { id:14, name:"Maroc Désert Expériences",
+    desc:"Adventure and desert experience company offering excursions from Marrakech into the Moroccan wilderness",
+    categories:["Activity"], hotelCat:null, grade:"B+", loc:"Marrakech",
+    langs:["English","French","Arabic"], bookings:genBookings(57,14),
+    approved:true, disabled:false, tempClosed:false,
+    svcs:[
+      {id:1401,name:"Sahara Camel Trek",         desc:"Sunset camel ride into the dunes with overnight camp option",          cat:"Activity",  sub:"Excursion",      cost:85, quote:120,approved:true,disabled:false,tempClosed:false},
+      {id:1402,name:"Quad Biking Agafay Desert", desc:"Thrilling ATV quad adventure across the Agafay rocky desert",         cat:"Activity",  sub:"ATV",            cost:95, quote:130,approved:true,disabled:false,tempClosed:false},
+      {id:1403,name:"Hot Air Balloon Marrakech", desc:"Sunrise balloon flight over the palm groves and Atlas Mountains",     cat:"Experience",sub:"Hot Air Balloon",cost:180,quote:250,approved:true,disabled:false,tempClosed:false},
     ]},
-  { id:15, name:"Riad 72", categories:["Hotel"], hotelCat:"4", grade:"B+",
-loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:4, approved:true, disabled:true, tempClosed:false,
-svcs:[
-      {id:1501,name:"Standard Room", cat:"Accommodation",sub:"Accommodation",cost:110,quote:150,approved:true,disabled:false,tempClosed:false},
+  { id:15, name:"Riad 72",
+    desc:"Intimate boutique riad in the heart of Marrakech's historic medina",
+    categories:["Hotel"], hotelCat:"4", grade:"B+", loc:"Marrakech",
+    langs:["English","French","Arabic"], bookings:genBookings(12,15),
+    approved:true, disabled:true, tempClosed:false,
+    svcs:[
+      {id:1501,name:"Standard Room", desc:"Cosy medina room with traditional Moroccan furnishings", cat:"Accommodation",sub:"Accommodation",cost:110,quote:150,approved:true,disabled:false,tempClosed:false},
     ]},
 ];
 // ═══════════════════════════════════════════
@@ -785,6 +827,46 @@ let activeCard = null;
 let modalContext = 'supplier'; // 'supplier' | 'lodging'
 let activeLodgingDay = null;
 let expandedCards = new Set();
+let searchTimer = null;
+const ALL_SUBCATS = ['Accommodation','Cooking Class','Culture','Excursion','Food','Guide','Hot Air Balloon','Monument/Site','Museum','Nature / Animals','Photoshoot','Private Driving','Restaurant','Show','Trekking','Well-being','Wine Tasting','ATV'];
+const SUBCAT_MAP = {
+  'Accommodation': ['Accommodation'],
+  'Activity':      ['ATV','Cooking Class','Culture','Excursion','Monument/Site','Museum','Nature / Animals','Trekking'],
+  'Driver':        ['Private Driving'],
+  'Experience':    ['Hot Air Balloon','Photoshoot','Show','Well-being','Wine Tasting'],
+  'Guide':         ['Guide'],
+  'Other':         [],
+  'Restaurant':    ['Food','Restaurant'],
+  'Transportation':['Private Driving'],
+};
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function scheduleSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(applyFilters, 1000);
+}
+function updateMargin() {
+  const cost  = parseFloat(document.getElementById('epCost').value)  || 0;
+  const quote = parseFloat(document.getElementById('epQuote').value) || 0;
+  const m = document.getElementById('epMargin');
+  if (cost || quote) {
+    m.value = (quote - cost).toFixed(2);
+    m.classList.add('filled');
+  } else {
+    m.value = '';
+    m.classList.remove('filled');
+  }
+}
+function onSvcCatChange() {
+  const cat   = document.getElementById('fSvcCat').value;
+  const subEl = document.getElementById('fSvcSub');
+  const prev  = subEl.value;
+  const opts  = (cat && SUBCAT_MAP[cat] && SUBCAT_MAP[cat].length) ? SUBCAT_MAP[cat] : ALL_SUBCATS;
+  subEl.innerHTML = '<option value="">All</option>' + opts.map(o => `<option>${o}</option>`).join('');
+  if (opts.includes(prev)) subEl.value = prev;
+  applyFilters();
+}
 // ═══════════════════════════════════════════
 // ENTRY PANEL
 // ═══════════════════════════════════════════
@@ -796,14 +878,16 @@ cardEl.classList.add('active');
 // Load existing data from data attributes or defaults
 document.getElementById('epSupplier').value = cardEl.dataset.supplier || '';
 document.getElementById('epService').value  = cardEl.dataset.service  || '';
+document.getElementById('epLocation').value = cardEl.dataset.location || '';
 document.getElementById('epCost').value     = cardEl.dataset.cost     || '';
 document.getElementById('epQuote').value    = cardEl.dataset.quote    || '';
 document.getElementById('epNotes').value    = '';
 document.getElementById('epTime').value     = '';
 document.getElementById('epIncluded').checked = !cardEl.dataset.notIncluded;
 document.getElementById('epNoGen').checked    = false;
+updateMargin();
 // Highlight filled fields
-  ['epSupplier','epService','epCost','epQuote'].forEach(id => {
+  ['epSupplier','epService','epLocation','epCost','epQuote'].forEach(id => {
 const el = document.getElementById(id);
 el.classList.toggle('filled', !!el.value);
   });
@@ -818,11 +902,13 @@ function savePanel() {
 if (!activeCard) return;
 const supplier = document.getElementById('epSupplier').value.trim();
 const service  = document.getElementById('epService').value.trim();
+const location = document.getElementById('epLocation').value.trim();
 const cost     = document.getElementById('epCost').value;
 const quote    = document.getElementById('epQuote').value;
 // Update card data attributes
 activeCard.dataset.supplier = supplier;
 activeCard.dataset.service  = service;
+activeCard.dataset.location = location;
 activeCard.dataset.cost     = cost;
 activeCard.dataset.quote    = quote;
 // Update supplier tag on card
@@ -844,19 +930,12 @@ showToast('✓ Entry saved');
 function openSupplierModal() {
 modalContext = 'supplier';
 document.getElementById('modalCtx').textContent = 'Proposal Editor';
-// Clear hotel category pre-filter
-document.getElementById('fCat').value = '';
-document.getElementById('hotelCatGrp').classList.add('hidden');
-document.getElementById('fHotelCat').value = '';
 openModal();
 }
 function openLodgingModal(day) {
 modalContext = 'lodging';
 activeLodgingDay = day;
 document.getElementById('modalCtx').textContent = 'Lodging – Day ' + day;
-// Pre-filter to Hotel
-document.getElementById('fCat').value = 'Hotel';
-document.getElementById('hotelCatGrp').classList.remove('hidden');
 openModal();
 }
 function openModal() {
@@ -874,65 +953,47 @@ if (e.target === document.getElementById('overlay')) closeModal();
 // ═══════════════════════════════════════════
 // FILTER LOGIC
 // ═══════════════════════════════════════════
-function onCatChange() {
-const v = document.getElementById('fCat').value;
-const isHotel = v === 'Hotel';
-document.getElementById('hotelCatGrp').classList.toggle('hidden', !isHotel);
-document.getElementById('langGrp').classList.toggle('hidden', isHotel);
-if (!isHotel) document.getElementById('fHotelCat').value = '';
-if (isHotel)  document.getElementById('fLang').value = '';
-applyFilters();
-}
-function clearFilters() {
-  ['fLoc','fCat','fHotelCat','fGrade','fLang','fAvgBookings','fSvcCat','fSvcSub'].forEach(id =>
-document.getElementById(id).value = '');
-document.getElementById('mSearch').value = '';
-document.getElementById('togUnavail').checked = false;
-document.getElementById('hotelCatGrp').classList.add('hidden');
-applyFilters();
-}
 function applyFilters() {
 const search   = document.getElementById('mSearch').value.toLowerCase().trim();
 const loc      = document.getElementById('fLoc').value;
-const cat      = document.getElementById('fCat').value;
 const hotelCat = document.getElementById('fHotelCat').value;
 const grade    = document.getElementById('fGrade').value;
-const lang     = document.getElementById('fLang').value;
 const svcCat   = document.getElementById('fSvcCat').value;
 const svcSub   = document.getElementById('fSvcSub').value;
-const avgBookings = parseInt(document.getElementById('fAvgBookings').value) || 0;
-const showAll  = document.getElementById('togUnavail').checked;
+const avgMin   = parseInt(document.getElementById('fAvgBookings').value) || 0;
+const words    = search ? search.split(/\s+/).filter(Boolean) : [];
 const filtered = SUPPLIERS.filter(s => {
-if (!s.approved) return false;
-if (!showAll && (s.disabled || s.tempClosed)) return false;
-if (search   && !s.name.toLowerCase().includes(search)) return false;
+if (!s.approved || s.disabled || s.tempClosed) return false;
 if (loc      && s.loc !== loc) return false;
-if (cat      && !s.categories.includes(cat)) return false;
 if (hotelCat && s.hotelCat !== hotelCat) return false;
 if (grade    && s.grade !== grade) return false;
-if (lang     && !s.langs.includes(lang)) return false;
-if (avgBookings && (s.avgBookingsPerMonth || 0) < avgBookings) return false;
+if (avgMin   && getAvgBookings(s) < avgMin) return false;
+if (words.length) {
+  const pool = [s.name, s.desc || ''].concat(
+    s.svcs.flatMap(sv => [sv.name, sv.desc || ''])
+  ).join(' ').toLowerCase();
+  if (!words.every(w => pool.includes(w))) return false;
+}
 if (svcCat || svcSub) {
-const hasMatch = s.svcs.some(sv => {
-if (!sv.approved) return false;
-if (!showAll && (sv.disabled || sv.tempClosed)) return false;
-if (svcCat && sv.cat !== svcCat) return false;
-if (svcSub && sv.sub !== svcSub) return false;
-return true;
-      });
-if (!hasMatch) return false;
-    }
+  const hasMatch = s.svcs.some(sv => {
+    if (!sv.approved || sv.disabled || sv.tempClosed) return false;
+    if (svcCat && sv.cat !== svcCat) return false;
+    if (svcSub && sv.sub !== svcSub) return false;
+    return true;
+  });
+  if (!hasMatch) return false;
+}
 return true;
   });
 if (filtered.length <= 2) filtered.forEach(s => expandedCards.add(s.id));
-renderResults(filtered, showAll, svcCat, svcSub);
+renderResults(filtered, svcCat, svcSub);
 document.getElementById('fCount').textContent =
 filtered.length === 0 ? 'No results' : `${filtered.length} supplier${filtered.length !== 1 ? 's' : ''}`;
 }
 // ═══════════════════════════════════════════
 // RENDER RESULTS
 // ═══════════════════════════════════════════
-function renderResults(list, showAll, svcCat, svcSub) {
+function renderResults(list, svcCat, svcSub) {
 const el = document.getElementById('mResults');
 if (!list.length) {
 el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-txt">No suppliers match your filters</div><div class="empty-sub">Try adjusting or clearing the filters</div></div>`;
@@ -940,16 +1001,13 @@ return;
   }
 el.innerHTML = list.map(s => {
 const isOpen = expandedCards.has(s.id);
-const unavail = s.disabled
-      ? `<span class="s-unavail dis"> · Disabled</span>`
-      : s.tempClosed ? `<span class="s-unavail cls"> · Temporarily closed</span>` : '';
 const catBadges = s.categories.map(c => `<span class="badge b-cat">${c}</span>`).join('');
 const hotelBadge = s.hotelCat ? `<span class="badge b-hotel">${s.hotelCat}★</span>` : '';
 const langBadge  = s.categories.includes('Guide')
       ? `<span class="badge b-lang">🗣 ${s.langs.slice(0,2).join(', ')}</span>` : '';
+const avgBkg = getAvgBookings(s);
 const visible = s.svcs.filter(sv => {
-if (!sv.approved) return false;
-if (!showAll && (sv.disabled || sv.tempClosed)) return false;
+if (!sv.approved || sv.disabled || sv.tempClosed) return false;
 if (svcCat && sv.cat !== svcCat) return false;
 if (svcSub && sv.sub !== svcSub) return false;
 return true;
@@ -961,14 +1019,14 @@ return `<tr>
         <td><div class="svc-name">${sv.name}</div><div class="svc-sub">${sv.cat} · ${sv.sub}</div></td>
         <td class="td-r"><span class="p-cost">$${sv.cost}</span></td>
         <td class="td-r"><span class="p-quote">$${sv.quote}</span></td>
-        <td class="td-r"><button class="sel-btn" onclick="selectService('${sp}','${sn}',${sv.cost},${sv.quote})">Select</button></td>
+        <td class="td-r"><button class="sel-btn" onclick="selectService('${sp}','${sn}',${sv.cost},${sv.quote},'${s.loc}')">Select</button></td>
       </tr>`;
     }).join('');
 return `<div class="s-card" id="sc-${s.id}">
       <div class="s-hdr ${isOpen?'open':''}" onclick="toggleCard(${s.id})">
         <div class="s-left">
-          <div><span class="s-name">${s.name}</span>${unavail}</div>
-          <div class="s-meta">${catBadges}<span class="badge b-grade">${s.grade}</span><span class="badge b-loc">📍 ${s.loc}</span>${hotelBadge}${langBadge}</div>
+          <div><span class="s-name">${s.name}</span></div>
+          <div class="s-meta">${catBadges}<span class="badge b-grade">${s.grade}</span><span class="badge b-loc">📍 ${s.loc}</span>${hotelBadge}${langBadge}<span class="badge b-bkg">~${avgBkg} bkg/mo</span></div>
         </div>
         <div class="s-right">
           <span class="s-count">${visible.length} service${visible.length!==1?'s':''}</span>
@@ -999,13 +1057,15 @@ hdr.classList.add('open'); list.classList.add('open'); chev.classList.add('open'
 // ═══════════════════════════════════════════
 // SELECT SERVICE → AUTOFILL
 // ═══════════════════════════════════════════
-function selectService(supplier, service, cost, quote) {
+function selectService(supplier, service, cost, quote, loc) {
 if (modalContext === 'supplier') {
 document.getElementById('epSupplier').value = supplier;
 document.getElementById('epService').value  = service;
+document.getElementById('epLocation').value = loc || '';
 document.getElementById('epCost').value     = cost;
 document.getElementById('epQuote').value    = quote;
-    ['epSupplier','epService','epCost','epQuote'].forEach(id =>
+updateMargin();
+    ['epSupplier','epService','epLocation','epCost','epQuote'].forEach(id =>
 document.getElementById(id).classList.add('filled'));
 showToast(`✓ "${service}" selected · fields autofilled`);
   } else if (modalContext === 'lodging') {
