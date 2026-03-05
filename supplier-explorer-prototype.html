@@ -302,6 +302,16 @@
             <option>Chinese</option>
           </select>
         </div>
+        <div class="filter-group">
+          <label class="filter-label">Average Bookings per Month</label>
+          <select class="filter-select" id="fAvgBookings" onchange="applyFilters()">
+            <option value="">Any</option>
+            <option value="5">5+</option>
+            <option value="10">10+</option>
+            <option value="20">20+</option>
+            <option value="30">30+</option>
+          </select>
+        </div>
         <div class="filter-section-title second">Service</div>
         <div class="filter-group">
           <label class="filter-label">Category</label>
@@ -381,6 +391,7 @@ const SUPPLIERS = [
     id:1, name:"Inkaterra Machu Picchu Pueblo Hotel",
     categories:["Hotel"], hotelCategory:"5+", grade:"A+",
     location:"Machu Picchu", languages:["English","Spanish","French"],
+    avgBookingsPerMonth:32,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:101,name:"Superior Garden View Room",   category:"Accommodation", subcat:"Accommodation",  cost:420,quote:560,approved:true,disabled:false,tempClosed:false},
@@ -392,6 +403,7 @@ const SUPPLIERS = [
     id:2, name:"Belmond Sanctuary Lodge",
     categories:["Hotel","Restaurant"], hotelCategory:"5+", grade:"A+",
     location:"Machu Picchu", languages:["English","Spanish","French","German"],
+    avgBookingsPerMonth:25,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:201,name:"Classic Room",            category:"Accommodation", subcat:"Accommodation", cost:520,quote:680,approved:true,disabled:false,tempClosed:false},
@@ -403,6 +415,7 @@ const SUPPLIERS = [
     id:3, name:"Peru Rail",
     categories:["Transportation"], hotelCategory:null, grade:"A",
     location:"Cusco", languages:["English","Spanish"],
+    avgBookingsPerMonth:18,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:301,name:"Vistadome – Cusco to Aguas Calientes",      category:"Transportation",subcat:"Train",cost:65, quote:90, approved:true,disabled:false,tempClosed:false},
@@ -414,6 +427,7 @@ const SUPPLIERS = [
     id:4, name:"GHL Hotel Cusco",
     categories:["Hotel"], hotelCategory:"4", grade:"B+",
     location:"Cusco", languages:["English","Spanish","German"],
+    avgBookingsPerMonth:12,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:401,name:"Standard Double Room",         category:"Accommodation",subcat:"Accommodation",cost:120,quote:165,approved:true,disabled:false,tempClosed:false},
@@ -424,6 +438,7 @@ const SUPPLIERS = [
     id:5, name:"Sol y Luna Lodge & Spa",
     categories:["Hotel","Activity"], hotelCategory:"5", grade:"A",
     location:"Sacred Valley", languages:["English","Spanish","French"],
+    avgBookingsPerMonth:22,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:501,name:"Casita Garden View",       category:"Accommodation",subcat:"Accommodation",cost:380,quote:500,approved:true,disabled:false,tempClosed:false},
@@ -436,6 +451,7 @@ const SUPPLIERS = [
     id:6, name:"Ministerio de Cultura – Machu Picchu",
     categories:["Activity"], hotelCategory:null, grade:"B",
     location:"Machu Picchu", languages:["Spanish","English"],
+    avgBookingsPerMonth:35,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:601,name:"Machu Picchu Ticket – Classic Circuit 1",     category:"Activity",subcat:"Monument/Site",cost:52,quote:75,approved:true,disabled:false,tempClosed:false},
@@ -448,6 +464,7 @@ const SUPPLIERS = [
     id:7, name:"Carlos Herrera – Licensed Guide",
     categories:["Guide"], hotelCategory:null, grade:"A",
     location:"Cusco", languages:["English","Spanish","French"],
+    avgBookingsPerMonth:8,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:701,name:"Cusco City Tour – Full Day",      category:"Guide",subcat:"Guide",cost:150,quote:200,approved:true,disabled:false,tempClosed:false},
@@ -459,6 +476,7 @@ const SUPPLIERS = [
     id:8, name:"Tambo del Inka – A Luxury Collection",
     categories:["Hotel"], hotelCategory:"5", grade:"A",
     location:"Sacred Valley", languages:["English","Spanish"],
+    avgBookingsPerMonth:14,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:801,name:"Deluxe Room",     category:"Accommodation",subcat:"Accommodation",cost:320,quote:430,approved:true,disabled:false,tempClosed:false},
@@ -469,6 +487,7 @@ const SUPPLIERS = [
     id:9, name:"Larco Museum",
     categories:["Activity"], hotelCategory:null, grade:"A-",
     location:"Lima", languages:["English","Spanish","French"],
+    avgBookingsPerMonth:6,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:901,name:"General Admission Ticket",  category:"Activity",subcat:"Museum",      cost:15,quote:22, approved:true,disabled:false,tempClosed:false},
@@ -480,6 +499,7 @@ const SUPPLIERS = [
     id:10, name:"Maras Hot Springs",
     categories:["Activity","Well-being"], hotelCategory:null, grade:"B+",
     location:"Sacred Valley", languages:["Spanish","English"],
+    avgBookingsPerMonth:3,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:1001,name:"Hot Springs Entry",        category:"Activity",subcat:"Well-being",    cost:20,quote:30, approved:true,disabled:false,tempClosed:false},
@@ -490,6 +510,7 @@ const SUPPLIERS = [
     id:11, name:"Cicciolina Cusco",
     categories:["Restaurant"], hotelCategory:null, grade:"A-",
     location:"Cusco", languages:["English","Spanish"],
+    avgBookingsPerMonth:9,
     approved:true, disabled:false, tempClosed:true,
     services:[
       {id:1101,name:"Set Dinner Menu",   category:"Restaurant",subcat:"Restaurant",  cost:45,quote:65, approved:true,disabled:false,tempClosed:false},
@@ -500,6 +521,7 @@ const SUPPLIERS = [
     id:12, name:"Old Pisco Bar & Restaurant",
     categories:["Restaurant"], hotelCategory:null, grade:"B",
     location:"Lima", languages:["English","Spanish"],
+    avgBookingsPerMonth:4,
     approved:true, disabled:true, tempClosed:false,
     services:[
       {id:1201,name:"Set Lunch Menu",    category:"Restaurant",subcat:"Restaurant",  cost:35,quote:50,approved:true,disabled:false,tempClosed:false},
@@ -509,6 +531,7 @@ const SUPPLIERS = [
     id:13, name:"Globos de los Andes – Hot Air Balloons",
     categories:["Activity"], hotelCategory:null, grade:"B+",
     location:"Sacred Valley", languages:["English","Spanish"],
+    avgBookingsPerMonth:7,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:1301,name:"Sunrise Hot Air Balloon – Sacred Valley", category:"Experience",subcat:"Hot Air Balloon",cost:195,quote:260,approved:true,disabled:false,tempClosed:false},
@@ -518,6 +541,7 @@ const SUPPLIERS = [
     id:14, name:"Aracari Travel – Photography Tours",
     categories:["Activity","Guide"], hotelCategory:null, grade:"A",
     location:"Lima", languages:["English","Spanish","French","Portuguese"],
+    avgBookingsPerMonth:11,
     approved:true, disabled:false, tempClosed:false,
     services:[
       {id:1401,name:"Lima Street Photography Tour",   category:"Experience",subcat:"Photoshoot",  cost:120,quote:165,approved:true,disabled:false,tempClosed:false},
@@ -554,7 +578,7 @@ function onCategoryChange() {
 }
 // ── Clear filters ─────────────────────────────────────────────────────────────
 function clearFilters() {
-  ['fLocation','fCategory','fHotelCat','fGrade','fLanguage','fSvcCategory','fSvcSubcat']
+  ['fLocation','fCategory','fHotelCat','fGrade','fLanguage','fAvgBookings','fSvcCategory','fSvcSubcat']
     .forEach(id => document.getElementById(id).value = '');
   document.getElementById('searchInput').value = '';
   document.getElementById('toggleUnavail').checked = false;
@@ -571,6 +595,7 @@ function applyFilters() {
   const lang      = document.getElementById('fLanguage').value;
   const svcCat    = document.getElementById('fSvcCategory').value;
   const svcSub    = document.getElementById('fSvcSubcat').value;
+  const avgBookings = parseInt(document.getElementById('fAvgBookings').value) || 0;
   const showUnavail = document.getElementById('toggleUnavail').checked;
   const filtered = SUPPLIERS
     .filter(s => {
@@ -582,6 +607,7 @@ function applyFilters() {
       if (hotelCat && s.hotelCategory !== hotelCat) return false;
       if (grade    && s.grade !== grade) return false;
       if (lang     && !s.languages.includes(lang)) return false;
+      if (avgBookings && (s.avgBookingsPerMonth || 0) < avgBookings) return false;
       // Service-level filters: supplier must have at least one matching service
       if (svcCat || svcSub) {
         const match = s.services.some(sv => {
