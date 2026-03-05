@@ -624,6 +624,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; d
             <option>Italian</option><option>German</option>
           </select>
         </div>
+        <div class="fg">
+          <label class="fg-label">Average Bookings per Month</label>
+          <select class="fg-select" id="fAvgBookings" onchange="applyFilters()">
+            <option value="">Any</option>
+            <option value="5">5+</option>
+            <option value="10">10+</option>
+            <option value="20">20+</option>
+            <option value="30">30+</option>
+          </select>
+        </div>
         <div class="fs-title mt">Service</div>
         <div class="fg">
           <label class="fg-label">Category</label>
@@ -671,99 +681,99 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; d
 // ═══════════════════════════════════════════
 const SUPPLIERS = [
   { id:1, name:"La Mamounia", categories:["Hotel"], hotelCat:"5+", grade:"A+",
-    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:38, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:101,name:"Superior Room",      cat:"Accommodation",sub:"Accommodation",cost:580,quote:780,approved:true,disabled:false,tempClosed:false},
       {id:102,name:"Grand Riad Suite",   cat:"Accommodation",sub:"Accommodation",cost:1200,quote:1600,approved:true,disabled:false,tempClosed:false},
       {id:103,name:"Breakfast",          cat:"Restaurant",   sub:"Food",         cost:45,quote:65,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:2, name:"Four Seasons Marrakech", categories:["Hotel"], hotelCat:"5+", grade:"A+",
-    loc:"Marrakech", langs:["English","French","Arabic","Spanish"], approved:true, disabled:false, tempClosed:false,
+    loc:"Marrakech", langs:["English","French","Arabic","Spanish"], avgBookingsPerMonth:31, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:201,name:"Superior Room",  cat:"Accommodation",sub:"Accommodation",cost:520,quote:700,approved:true,disabled:false,tempClosed:false},
       {id:202,name:"Garden Suite",   cat:"Accommodation",sub:"Accommodation",cost:980,quote:1300,approved:true,disabled:false,tempClosed:false},
       {id:203,name:"Half Board",     cat:"Restaurant",   sub:"Food",         cost:85,quote:120,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:3, name:"Royal Mansour Marrakech", categories:["Hotel"], hotelCat:"5+", grade:"A+",
-    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:24, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:301,name:"Riad 1 Bedroom", cat:"Accommodation",sub:"Accommodation",cost:1500,quote:2000,approved:true,disabled:false,tempClosed:false},
       {id:302,name:"Breakfast",      cat:"Restaurant",   sub:"Food",         cost:55,quote:80,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:4, name:"Sofitel Casablanca Tour Blanche", categories:["Hotel"], hotelCat:"5", grade:"A-",
-    loc:"Casablanca", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    loc:"Casablanca", langs:["English","French","Arabic"], avgBookingsPerMonth:17, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:401,name:"Superior Room", cat:"Accommodation",sub:"Accommodation",cost:180,quote:240,approved:true,disabled:false,tempClosed:false},
       {id:402,name:"Luxury Room",   cat:"Accommodation",sub:"Accommodation",cost:220,quote:295,approved:true,disabled:false,tempClosed:false},
       {id:403,name:"Breakfast",     cat:"Restaurant",   sub:"Food",         cost:32,quote:45,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:5, name:"Palais Faraj", categories:["Hotel"], hotelCat:"5", grade:"A",
-    loc:"Fes", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    loc:"Fes", langs:["English","French","Arabic"], avgBookingsPerMonth:13, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:501,name:"Deluxe Room",     cat:"Accommodation",sub:"Accommodation",cost:220,quote:300,approved:true,disabled:false,tempClosed:false},
       {id:502,name:"Suite Médina",    cat:"Accommodation",sub:"Accommodation",cost:380,quote:520,approved:true,disabled:false,tempClosed:false},
       {id:503,name:"Breakfast",       cat:"Restaurant",   sub:"Food",         cost:28,quote:40,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:6, name:"Riad Fes – Relais & Châteaux", categories:["Hotel"], hotelCat:"5", grade:"A",
-    loc:"Fes", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    loc:"Fes", langs:["English","French","Arabic"], avgBookingsPerMonth:21, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:601,name:"Déluxe Room",  cat:"Accommodation",sub:"Accommodation",cost:195,quote:265,approved:true,disabled:false,tempClosed:false},
       {id:602,name:"Junior Suite", cat:"Accommodation",sub:"Accommodation",cost:280,quote:380,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:7, name:"Dar Rhizlane", categories:["Hotel"], hotelCat:"4", grade:"A-",
-    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:9, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:701,name:"Classic Room",    cat:"Accommodation",sub:"Accommodation",cost:140,quote:190,approved:true,disabled:false,tempClosed:false},
       {id:702,name:"Prestige Suite",  cat:"Accommodation",sub:"Accommodation",cost:260,quote:350,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:8, name:"La Maison Arabe", categories:["Hotel","Restaurant"], hotelCat:"5", grade:"A",
-    loc:"Marrakech", langs:["English","French","Arabic","Italian"], approved:true, disabled:false, tempClosed:false,
+    loc:"Marrakech", langs:["English","French","Arabic","Italian"], avgBookingsPerMonth:16, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:801,name:"Superior Room",          cat:"Accommodation",sub:"Accommodation",cost:280,quote:380,approved:true,disabled:false,tempClosed:false},
       {id:802,name:"Traditional Dinner",     cat:"Restaurant",   sub:"Restaurant",   cost:60,quote:85,approved:true,disabled:false,tempClosed:false},
       {id:803,name:"Moroccan Cooking Class", cat:"Activity",     sub:"Cooking Class",cost:90,quote:125,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:9, name:"Rick's Cafe", categories:["Restaurant"], hotelCat:null, grade:"A",
-    loc:"Casablanca", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    loc:"Casablanca", langs:["English","French","Arabic"], avgBookingsPerMonth:22, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:901,name:"Welcome Dinner – Set Menu", cat:"Restaurant",sub:"Restaurant",cost:55,quote:80,approved:true,disabled:false,tempClosed:false},
       {id:902,name:"À la Carte Dinner",         cat:"Restaurant",sub:"Restaurant",cost:65,quote:92,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:10, name:"Dar Moha", categories:["Restaurant"], hotelCat:null, grade:"A+",
-    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:28, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:1001,name:"Traditional Moroccan Dinner",cat:"Restaurant",sub:"Restaurant",  cost:70,quote:100,approved:true,disabled:false,tempClosed:false},
       {id:1002,name:"Cooking Class",              cat:"Activity",  sub:"Cooking Class",cost:95,quote:130,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:11, name:"Atlas Luxury Tours", categories:["Driver","Transportation"], hotelCat:null, grade:"A-",
-    loc:"Casablanca", langs:["English","French","Arabic","Spanish"], approved:true, disabled:false, tempClosed:false,
+    loc:"Casablanca", langs:["English","French","Arabic","Spanish"], avgBookingsPerMonth:33, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:1101,name:"Private Transfer CMN Airport – Hotel",cat:"Transportation",sub:"Private Driving",cost:85,quote:120,approved:true,disabled:false,tempClosed:false},
       {id:1102,name:"Full Day Private Driver",              cat:"Driver",        sub:"Private Driving",cost:180,quote:250,approved:true,disabled:false,tempClosed:false},
       {id:1103,name:"Casablanca → Chefchaouen Transfer",   cat:"Transportation",sub:"Private Driving",cost:320,quote:440,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:12, name:"Mohammed El Fassi – Licensed Guide", categories:["Guide"], hotelCat:null, grade:"A",
-    loc:"Fes", langs:["English","French","Arabic","Spanish"], approved:true, disabled:false, tempClosed:false,
+    loc:"Fes", langs:["English","French","Arabic","Spanish"], avgBookingsPerMonth:7, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:1201,name:"Fes Medina Full Day Guide",  cat:"Guide",sub:"Guide",cost:160,quote:220,approved:true,disabled:false,tempClosed:false},
       {id:1202,name:"Volubilis & Fes Full Day",   cat:"Guide",sub:"Guide",cost:220,quote:300,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:13, name:"Chefchaouen Blue Escapes", categories:["Guide","Activity"], hotelCat:null, grade:"B+",
-    loc:"Chefchaouen", langs:["English","Spanish","Arabic"], approved:true, disabled:false, tempClosed:false,
+    loc:"Chefchaouen", langs:["English","Spanish","Arabic"], avgBookingsPerMonth:11, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:1301,name:"Blue Medina Walking Tour",  cat:"Guide",    sub:"Guide",      cost:80,quote:115,approved:true,disabled:false,tempClosed:false},
       {id:1302,name:"Photography Walk",          cat:"Experience",sub:"Photoshoot",cost:95,quote:130,approved:true,disabled:false,tempClosed:false},
       {id:1303,name:"Akchour Waterfalls Trek",   cat:"Activity", sub:"Trekking",   cost:70,quote:100,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:14, name:"Maroc Désert Expériences", categories:["Activity"], hotelCat:null, grade:"B+",
-    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:false, tempClosed:false,
+    loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:19, approved:true, disabled:false, tempClosed:false,
     svcs:[
       {id:1401,name:"Sahara Camel Trek",         cat:"Activity",  sub:"Excursion",      cost:85,quote:120,approved:true,disabled:false,tempClosed:false},
       {id:1402,name:"Quad Biking Agafay Desert", cat:"Activity",  sub:"ATV",            cost:95,quote:130,approved:true,disabled:false,tempClosed:false},
       {id:1403,name:"Hot Air Balloon Marrakech", cat:"Experience",sub:"Hot Air Balloon",cost:180,quote:250,approved:true,disabled:false,tempClosed:false},
     ]},
   { id:15, name:"Riad 72", categories:["Hotel"], hotelCat:"4", grade:"B+",
-    loc:"Marrakech", langs:["English","French","Arabic"], approved:true, disabled:true, tempClosed:false,
+    loc:"Marrakech", langs:["English","French","Arabic"], avgBookingsPerMonth:4, approved:true, disabled:true, tempClosed:false,
     svcs:[
       {id:1501,name:"Standard Room", cat:"Accommodation",sub:"Accommodation",cost:110,quote:150,approved:true,disabled:false,tempClosed:false},
     ]},
@@ -874,7 +884,7 @@ function onCatChange() {
   applyFilters();
 }
 function clearFilters() {
-  ['fLoc','fCat','fHotelCat','fGrade','fLang','fSvcCat','fSvcSub'].forEach(id =>
+  ['fLoc','fCat','fHotelCat','fGrade','fLang','fAvgBookings','fSvcCat','fSvcSub'].forEach(id =>
     document.getElementById(id).value = '');
   document.getElementById('mSearch').value = '';
   document.getElementById('togUnavail').checked = false;
@@ -890,6 +900,7 @@ function applyFilters() {
   const lang     = document.getElementById('fLang').value;
   const svcCat   = document.getElementById('fSvcCat').value;
   const svcSub   = document.getElementById('fSvcSub').value;
+  const avgBookings = parseInt(document.getElementById('fAvgBookings').value) || 0;
   const showAll  = document.getElementById('togUnavail').checked;
   const filtered = SUPPLIERS.filter(s => {
     if (!s.approved) return false;
@@ -900,6 +911,7 @@ function applyFilters() {
     if (hotelCat && s.hotelCat !== hotelCat) return false;
     if (grade    && s.grade !== grade) return false;
     if (lang     && !s.langs.includes(lang)) return false;
+    if (avgBookings && (s.avgBookingsPerMonth || 0) < avgBookings) return false;
     if (svcCat || svcSub) {
       const hasMatch = s.svcs.some(sv => {
         if (!sv.approved) return false;
