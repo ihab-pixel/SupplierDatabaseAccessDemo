@@ -534,15 +534,23 @@ overflow-y: scroll; padding: 14px; padding-bottom: 52px;
 <span class="pf-label">Service</span>
 <input type="text" class="pf-input" id="epService" placeholder="–" readonly>
 </div>
+<div class="pf">
+<span class="pf-label">Location</span>
+<input type="text" class="pf-input" id="epLocation" placeholder="–">
+</div>
 <div class="pf-2col">
 <div class="pf">
 <span class="pf-label">Unit Cost</span>
-<input type="number" class="pf-input" id="epCost" placeholder="0">
+<input type="number" class="pf-input" id="epCost" placeholder="0" oninput="updateMargin()">
 </div>
 <div class="pf">
 <span class="pf-label">Unit Quote</span>
-<input type="number" class="pf-input" id="epQuote" placeholder="0">
+<input type="number" class="pf-input" id="epQuote" placeholder="0" oninput="updateMargin()">
 </div>
+</div>
+<div class="pf">
+<span class="pf-label">Margin</span>
+<input type="number" class="pf-input" id="epMargin" placeholder="–" readonly>
 </div>
 <div class="pf">
 <span class="pf-label">Notes to Ops</span>
@@ -573,7 +581,7 @@ overflow-y: scroll; padding: 14px; padding-bottom: 52px;
 <span class="modal-ctx" id="modalCtx">Proposal Editor</span>
 <div class="srch-wrap">
 <span class="srch-icon">🔍</span>
-<input type="text" id="mSearch" placeholder="Search suppliers and services…" oninput="applyFilters()">
+<input type="text" id="mSearch" placeholder="Search suppliers and services…" oninput="scheduleSearch()">
 </div>
 <button class="modal-close" onclick="closeModal()">✕</button>
 </div>
@@ -612,7 +620,7 @@ overflow-y: scroll; padding: 14px; padding-bottom: 52px;
 <div class="fs-title mt">Service</div>
 <div class="fg">
 <label class="fg-label">Category</label>
-<select class="fg-select" id="fSvcCat" onchange="applyFilters()">
+<select class="fg-select" id="fSvcCat" onchange="onSvcCatChange()">
 <option value="">All</option>
 <option>Accommodation</option><option>Experience</option>
 <option>Guide</option><option>Transportation</option>
@@ -819,6 +827,46 @@ let activeCard = null;
 let modalContext = 'supplier'; // 'supplier' | 'lodging'
 let activeLodgingDay = null;
 let expandedCards = new Set();
+let searchTimer = null;
+const ALL_SUBCATS = ['Accommodation','Cooking Class','Culture','Excursion','Food','Guide','Hot Air Balloon','Monument/Site','Museum','Nature / Animals','Photoshoot','Private Driving','Restaurant','Show','Trekking','Well-being','Wine Tasting','ATV'];
+const SUBCAT_MAP = {
+  'Accommodation': ['Accommodation'],
+  'Activity':      ['ATV','Cooking Class','Culture','Excursion','Monument/Site','Museum','Nature / Animals','Trekking'],
+  'Driver':        ['Private Driving'],
+  'Experience':    ['Hot Air Balloon','Photoshoot','Show','Well-being','Wine Tasting'],
+  'Guide':         ['Guide'],
+  'Other':         [],
+  'Restaurant':    ['Food','Restaurant'],
+  'Transportation':['Private Driving'],
+};
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function scheduleSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(applyFilters, 1000);
+}
+function updateMargin() {
+  const cost  = parseFloat(document.getElementById('epCost').value)  || 0;
+  const quote = parseFloat(document.getElementById('epQuote').value) || 0;
+  const m = document.getElementById('epMargin');
+  if (cost || quote) {
+    m.value = (quote - cost).toFixed(2);
+    m.classList.add('filled');
+  } else {
+    m.value = '';
+    m.classList.remove('filled');
+  }
+}
+function onSvcCatChange() {
+  const cat   = document.getElementById('fSvcCat').value;
+  const subEl = document.getElementById('fSvcSub');
+  const prev  = subEl.value;
+  const opts  = (cat && SUBCAT_MAP[cat] && SUBCAT_MAP[cat].length) ? SUBCAT_MAP[cat] : ALL_SUBCATS;
+  subEl.innerHTML = '<option value="">All</option>' + opts.map(o => `<option>${o}</option>`).join('');
+  if (opts.includes(prev)) subEl.value = prev;
+  applyFilters();
+}
 // ═══════════════════════════════════════════
 // ENTRY PANEL
 // ═══════════════════════════════════════════
@@ -830,14 +878,16 @@ cardEl.classList.add('active');
 // Load existing data from data attributes or defaults
 document.getElementById('epSupplier').value = cardEl.dataset.supplier || '';
 document.getElementById('epService').value  = cardEl.dataset.service  || '';
+document.getElementById('epLocation').value = cardEl.dataset.location || '';
 document.getElementById('epCost').value     = cardEl.dataset.cost     || '';
 document.getElementById('epQuote').value    = cardEl.dataset.quote    || '';
 document.getElementById('epNotes').value    = '';
 document.getElementById('epTime').value     = '';
 document.getElementById('epIncluded').checked = !cardEl.dataset.notIncluded;
 document.getElementById('epNoGen').checked    = false;
+updateMargin();
 // Highlight filled fields
-  ['epSupplier','epService','epCost','epQuote'].forEach(id => {
+  ['epSupplier','epService','epLocation','epCost','epQuote'].forEach(id => {
 const el = document.getElementById(id);
 el.classList.toggle('filled', !!el.value);
   });
@@ -852,11 +902,13 @@ function savePanel() {
 if (!activeCard) return;
 const supplier = document.getElementById('epSupplier').value.trim();
 const service  = document.getElementById('epService').value.trim();
+const location = document.getElementById('epLocation').value.trim();
 const cost     = document.getElementById('epCost').value;
 const quote    = document.getElementById('epQuote').value;
 // Update card data attributes
 activeCard.dataset.supplier = supplier;
 activeCard.dataset.service  = service;
+activeCard.dataset.location = location;
 activeCard.dataset.cost     = cost;
 activeCard.dataset.quote    = quote;
 // Update supplier tag on card
@@ -967,7 +1019,7 @@ return `<tr>
         <td><div class="svc-name">${sv.name}</div><div class="svc-sub">${sv.cat} · ${sv.sub}</div></td>
         <td class="td-r"><span class="p-cost">$${sv.cost}</span></td>
         <td class="td-r"><span class="p-quote">$${sv.quote}</span></td>
-        <td class="td-r"><button class="sel-btn" onclick="selectService('${sp}','${sn}',${sv.cost},${sv.quote})">Select</button></td>
+        <td class="td-r"><button class="sel-btn" onclick="selectService('${sp}','${sn}',${sv.cost},${sv.quote},'${s.loc}')">Select</button></td>
       </tr>`;
     }).join('');
 return `<div class="s-card" id="sc-${s.id}">
@@ -1005,13 +1057,15 @@ hdr.classList.add('open'); list.classList.add('open'); chev.classList.add('open'
 // ═══════════════════════════════════════════
 // SELECT SERVICE → AUTOFILL
 // ═══════════════════════════════════════════
-function selectService(supplier, service, cost, quote) {
+function selectService(supplier, service, cost, quote, loc) {
 if (modalContext === 'supplier') {
 document.getElementById('epSupplier').value = supplier;
 document.getElementById('epService').value  = service;
+document.getElementById('epLocation').value = loc || '';
 document.getElementById('epCost').value     = cost;
 document.getElementById('epQuote').value    = quote;
-    ['epSupplier','epService','epCost','epQuote'].forEach(id =>
+updateMargin();
+    ['epSupplier','epService','epLocation','epCost','epQuote'].forEach(id =>
 document.getElementById(id).classList.add('filled'));
 showToast(`✓ "${service}" selected · fields autofilled`);
   } else if (modalContext === 'lodging') {
