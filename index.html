@@ -194,6 +194,10 @@ white-space: nowrap; display: flex; align-items: center; gap: 4px;
 transition: background .15s; flex-shrink: 0;
 }
 .browse-btn:hover { background: #a34800; }
+.pf-input-wrap { position: relative; }
+.pf-input-wrap .pf-input { padding-right: 30px; }
+.pf-srch-icon { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #ccc; font-size: 13px; padding: 0; line-height: 1; }
+.pf-srch-icon:hover { color: #c85c00; }
 .ep-footer { padding: 10px 14px; border-top: 1px solid #f0f0f0; display: flex; gap: 8px; flex-shrink: 0; }
 .ep-save { flex: 1; padding: 8px; background: #c85c00; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .ep-save:hover { background: #a34800; }
@@ -525,14 +529,17 @@ overflow-y: scroll; padding: 14px; padding-bottom: 52px;
 <div class="pf-divider"></div>
 <div class="pf">
 <span class="pf-label">Supplier</span>
-<div class="pf-row">
+<div class="pf-input-wrap">
 <input type="text" class="pf-input" id="epSupplier" placeholder="No supplier">
-<button class="browse-btn" onclick="openSupplierModal()">🔍 Browse</button>
+<button class="pf-srch-icon" onclick="openSupplierModal()" title="Browse suppliers">🔍</button>
 </div>
 </div>
 <div class="pf">
 <span class="pf-label">Service</span>
+<div class="pf-input-wrap">
 <input type="text" class="pf-input" id="epService" placeholder="–" readonly>
+<button class="pf-srch-icon" onclick="openSupplierModal()" title="Browse services">🔍</button>
+</div>
 </div>
 <div class="pf">
 <span class="pf-label">Location</span>
